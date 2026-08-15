@@ -1,98 +1,274 @@
-# Wafer Pattern Matching and Pose Estimation System
+# DriftSense — Wafer Pattern Matching & Stage Navigation Drift Recovery
 
-## 1. Overview
-
-Wafer pattern alignment is a critical step in semiconductor fabrication. Given a high-resolution 256x256 wafer reference pattern (template) and a larger 512x512 search image containing environmental degradation (such as SEM noise, charging effects, spatial distortion, and scale changes), the system must determine the sub-pixel coordinates (X, Y), rotation, and scale of the target wafer pattern.
-
-The final production system is:
-**"Classical NCC-Based Wafer Pattern Matching with High-Resolution Pose Refinement"**
-
-Deep learning Siamese models (DL V1 and DL V2) were investigated experimentally for candidate reranking. However, they were excluded from the final production inference system because ablation studies proved they did not improve localization performance and introduced sensitivity to sub-pixel translation shifts.
+DriftSense is an automated semiconductor wafer inspection system built for the SEMICON India Hackathon. It localizes micro-scale chip reference patterns inside wide-field wafer inspection images and calculates sensorless stage coordinate corrections ($\text{MOVE X}$, $\text{MOVE Y}$) to recover intended inspection sites when navigation drift occurs.
 
 ---
 
-## 2. Final System Architecture
+## 1. Project Overview (What is DriftSense?)
+
+### The Semiconductor Wafer Problem
+During semiconductor fabrication and defect inspection, automated tools move a high-precision stage to inspect specific chip coordinates across a wafer. Due to mechanical vibrations, thermal expansion, and mechanical backlash, the stage often drifts slightly off target.
+
+Because semiconductor wafers feature repeating grid-like Manhattan patterns, even a minor drift of a few pixels can cause the tool to inspect the wrong die or miss critical defects.
+
+### The DriftSense Solution
+DriftSense solves this problem without requiring extra physical hardware sensors:
+1. **High-Resolution Reference Pattern** ($100\times$ magnification, $256 \times 256$ px): The target pattern structure to be localized.
+2. **Search Area** ($10\times$ magnification FOV, $512 \times 512$ px): The wider inspection image captured by the wafer camera.
+3. **Pattern Localization**: Driftsense localizes the pattern center $(x_{detected}, y_{detected})$, rotation, and scale with sub-pixel precision.
+4. **Drift Calculation**: Compares actual detected coordinates against expected inspection coordinates $(x_{expected}, y_{expected})$.
+5. **Stage Coordinate Recovery**: Computes the exact correction vector ($\Delta x, \Delta y$) needed to move the stage back to the center of the target site.
+
+---
+
+## 2. System Architecture
 
 ```
-       Reference Image
-             |
-             v
-      Patch Extraction
-             |
-             v
-Multi-Scale / Rotation Classical NCC Matching
-             |
-             v
-   Top Candidate Selection
-             |
-             v
-    Subpixel Localization
-             |
-             v
-High-Resolution Pose Refinement
-  +--------------------------+
-  | - Rotation Optimization  |
-  | - Scale Optimization     |
-  +--------------------------+
-             |
-             v
-  Final X, Y, Rotation, Scale
+                       ┌─────────────────────────┐
+                       │    Reference Pattern    │
+                       │     (256 x 256 px)      │
+                       └────────────┬────────────┘
+                                    │
+                                    v
+                       ┌─────────────────────────┐
+                       │       Search Area       │
+                       │     (512 x 512 px)      │
+                       └────────────┬────────────┘
+                                    │
+                                    v
+                       ┌─────────────────────────┐
+                       │  Classical NCC Matcher  │
+                       │ + Candidate Generator   │
+                       └────────────┬────────────┘
+                                    │
+                                    v
+                       ┌─────────────────────────┐
+                       │ High-Resolution Pose    │
+                       │ Refinement (Rot & Scale)│
+                       └────────────┬────────────┘
+                                    │
+                                    v
+                       ┌─────────────────────────┐
+                       │  Target Localization    │
+                       │  (X, Y, Rotation, Scale)│
+                       └────────────┬────────────┘
+                                    │
+                                    v
+                       ┌─────────────────────────┐
+                       │  Drift & Stage Recovery │
+                       │   (MOVE X, MOVE Y)      │
+                       └────────────┬────────────┘
+                                    │
+                   ┌────────────────┴────────────────┐
+                   │                                 │
+                   v                                 v
+        ┌────────────────────┐            ┌────────────────────┐
+        │   FastAPI Backend  │            │  Next.js Frontend  │
+        │   (localhost:8000) │<──────────>│  (localhost:3000)  │
+        └────────────────────┘            └────────────────────┘
 ```
 
 ---
 
-## 3. Key Features
+## 3. Directory & File Breakdown
 
-- **Sub-Pixel Localization**: Employs 1D parabolic sub-pixel peak interpolation for translation correction.
-- **Pose Refinement**: Iterative coordinate descent search over rotation and scale grids using local Normalized Cross-Correlation (NCC) sweeps.
-- **Deep Learning Exclusion**: Zero neural network dependency during final inference, eliminating PyTorch overhead and hardware latency.
-- **Reproducible Hashes**: SHA-256 integrity manifest securing the 40-sample benchmark set.
-- **Robustness Tested**: Validated on 200 independent samples under extreme noise, charging, and scale drifts.
-- **Traceability**: All output numbers are mapped to source files via traceability logs.
+Below is a detailed list of all project folders and files, explaining what each contains:
+
+```
+.
+├── backend/                        # FastAPI Backend Application Layer
+│   ├── main.py                     # Main FastAPI server entry point & API routes
+│   ├── schemas.py                  # Pydantic data schemas for request/response validation
+│   ├── requirements.txt            # Python dependencies for backend API
+│   └── services/
+│       └── driftsense_service.py   # Service wrapping frozen pattern matcher & drift math
+│
+├── frontend/                       # Next.js 15 Web Application (User Interface)
+│   ├── package.json                # Frontend Node.js dependencies & scripts
+│   ├── tailwind.config.ts          # Tailwind CSS styling configuration
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── page.tsx            # Main single-page web dashboard
+│   │   │   ├── layout.tsx          # Root HTML layout with custom typography
+│   │   │   └── globals.css         # Global CSS styles & custom animations
+│   │   ├── components/
+│   │   │   ├── header.tsx          # Header bar with system status & "Run Demo" button
+│   │   │   ├── hero-section.tsx    # Title banner & horizontal pipeline flowchart
+│   │   │   ├── reference-viewer.tsx# 256x256 reference image viewer with 0-256px ruler scales
+│   │   │   ├── search-viewer.tsx   # 512x512 search area viewer with 0-500px ruler scales & crosshairs
+│   │   │   ├── analysis-controls.tsx # Upload buttons & expected X/Y coordinate input controls
+│   │   │   ├── alignment-results.tsx # 5-metric display card (Position, Drift, Rotation, Scale, NCC)
+│   │   │   ├── drift-status.tsx    # Status badge (ALIGNED, MINOR DRIFT, SIGNIFICANT DRIFT)
+│   │   │   ├── stage-recovery.tsx  # Animated stage vector graph showing CURRENT vs TARGET position
+│   │   │   └── process-flow.tsx    # 4-step technical explanation of the pipeline
+│   │   ├── lib/
+│   │   │   └── api.ts              # HTTP API client for calling FastAPI backend
+│   │   └── types/
+│   │       └── analysis.ts         # TypeScript interfaces matching API schemas
+│
+├── src/                            # Core Python Algorithmic Pipeline & CLI Utilities
+│   ├── final_system.py             # Main production entry point for pattern matching
+│   ├── drift_recovery.py           # Stage drift recovery & classification logic
+│   ├── driftsense.py               # CLI tool for running end-to-end drift detection
+│   ├── driftsense_demo.py          # Terminal demonstration runner
+│   ├── run_final.py                # Command-line pattern localization runner
+│   ├── verify_final_system.py      # Reproducibility verification test suite
+│   ├── matching/
+│   │   └── classical_matcher.py    # Sub-pixel classical NCC template matcher
+│   ├── hybrid/
+│   │   ├── candidate_generator.py  # Multi-scale & rotation candidate generator
+│   │   └── patch_extractor.py      # Patch extraction utility
+│   ├── audit/
+│   │   ├── validate_drift_recovery.py # Math validation suite for stage recovery
+│   │   └── verify_drift_audit.py   # Final audit log & hash integrity checker
+│   └── visualization/
+│       └── visualize_drift.py      # Generates synthetic drift plots
+│
+├── configs/
+│   └── final_system_config.json    # Immutable production algorithm parameters & thresholds
+│
+├── data/                           # Wafer Inspection Image Benchmark & Datasets
+│   ├── sample_000/ to sample_039/  # Frozen 40-sample benchmark dataset
+│   └── robustness_samples/         # 200 independent evaluation samples
+│
+├── models/                         # Experimental Deep Learning Model Checkpoints (DL V1 & V2)
+│
+├── reports/                        # Documentation, Audit Logs & Plots
+│   ├── DRIFT_RECOVERY_TECHNICAL_NOTE.md # Complete mathematical technical note
+│   ├── FINAL_TECHNICAL_REPORT.md   # System engineering report
+│   ├── PROJECT_PRESENTATION.md     # Hackathon presentation slides
+│   └── drift_recovery/             # Validation JSONs, audit markdown logs, & figures
+│
+├── requirements.txt                # Main Python environment dependencies
+└── README.md                       # Main project documentation (this file)
+```
 
 ---
 
-## 4. Results
+## 4. Backend & Frontend Architecture
 
-### Performance Summary
+The web application is split into two clean layers:
 
-| Dataset | Success Rate (%) | Median Loc Error (px) | Mean Rot Error (°) | Mean Scale Error | Avg Time (s) |
-|---|---|---|---|---|---|
-| **Frozen 40-Sample Benchmark** | **97.5% (39/40)** | 0.5280 px | 0.0910° | 0.00367 | 0.3666 s |
-| **Robustness Set (200 Samples)** | **97.5% (195/200)** | 0.5648 px | 0.0847° | 0.00489 | 0.3666 s |
+### Backend Layer (`backend/`)
+- **Technology**: FastAPI (Python 3.10+) running on **`http://localhost:8000`**
+- **Role**: Wraps the frozen Python matching engine (`src/final_system.py`) and drift recovery module (`src/drift_recovery.py`) into typed REST endpoints.
+- **Available Endpoints**:
+  - `GET /api/health`: Health status check (`{ "status": "online", "system": "DriftSense" }`).
+  - `GET /api/demo`: Runs analysis on benchmark `sample_010` and returns structured JSON along with base64 encoded images.
+  - `POST /api/analyze`: Accepts multipart uploads (`reference` image, `search` image, `expected_x`, `expected_y`) and returns matching & drift results.
 
-*Note: The robustness set's mean location error of 5.2371 px is heavily skewed by 4 tracking loss outliers. The median (0.5648 px) and 95th percentile (0.7723 px) represent typical operating accuracy.*
+### Frontend Layer (`frontend/`)
+- **Technology**: Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Lucide icons running on **`http://localhost:3000`**
+- **Role**: Provides a semiconductor inspection UI for judges to interact with the system visually.
+- **Key Features**:
+  - **Pixel Coordinate Scale Rulers**: Displays $0\text{--}256$ px scales on the Reference Pattern and $0\text{--}500$ px scales on the Search Area with active detected coordinate markers (`X: 254`, `Y: 411`).
+  - **Scanning & Target Overlays**: Animated scanning line during analysis and precise target crosshairs upon detection.
+  - **Stage Correction Vector Graph**: Visualizes `CURRENT` position vs `TARGET` position with an animated arrow and exact `MOVE X` / `MOVE Y` values.
+  - **Live Demo Mode**: Single-click interactive demonstration.
+
+### How They Connect
+The frontend sends HTTP requests to `http://localhost:8000` via `frontend/src/lib/api.ts`. Cross-Origin Resource Sharing (CORS) is enabled on the FastAPI backend to allow seamless local communication.
 
 ---
 
-## 5. Experimental Ablation
+## 5. Step-by-Step Setup & Quickstart
 
-| Configuration | Success Rate (%) | Mean Loc Error (px) | Mean Rot Error (°) | Mean Scale Error | Avg Time (s) |
-|---|---|---|---|---|---|
-| Original Phase 3 Classical | 77.5% | 0.5425 | 0.2524° | 0.00801 | 0.6153 s |
-| Classical + Pose Refinement | 97.5% | 0.5425 | 0.0910° | 0.00367 | 0.6267 s |
-| DL Matcher V1 Reranking | 27.5% | 143.4126 | 0.4017° | 0.01431 | 0.6153 s |
-| Hybrid Fusion | 72.5% | 17.3104 | 0.2354° | 0.00810 | 0.6153 s |
-| **Final Frozen System** | **97.5%** | **0.5425** | **0.0910°** | **0.00367** | **0.3666 s** |
+### Prerequisites
+- **Python**: 3.10 or higher
+- **Node.js**: 18.0 or higher (with `npm`)
 
-*Scientific Interpretation*: Bypassing deep learning and applying classical coordinate descent refinement yielded the success rate increase (from 77.5% to 97.5%). The DL models did not improve candidate selection on the benchmark due to translation-rotation coupling.
-
----
-
-## 6. Installation
-
-Create a virtual environment and install dependencies:
+### Step 1: Clone Repository & Setup Python Environment
 ```bash
+# Clone repository
+git clone https://github.com/Suryooday/Driftsense.git
+cd Driftsense
+
+# Create virtual environment
 python3 -m venv venv
+
+# Activate virtual environment (macOS/Linux)
 source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
+pip install -r backend/requirements.txt
+```
+
+### Step 2: Setup Frontend Dependencies
+```bash
+# Navigate to frontend folder and install Node packages
+cd frontend
+npm install
+cd ..
 ```
 
 ---
 
-## 7. Running Inference
+## 6. How to Run the Web Application
 
-Evaluate a single reference and search image pair:
+To run the complete web application, start both the backend server and frontend web interface in separate terminal windows:
+
+### Terminal 1: Backend Server (FastAPI)
+```bash
+# From project root directory
+source venv/bin/activate
+PYTHONPATH=. ./venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```
+*The backend API will start at `http://localhost:8000`.*
+
+### Terminal 2: Frontend Web Interface (Next.js)
+```bash
+# From project root directory
+cd frontend
+npm run dev -- -p 3000
+```
+*The web dashboard will start at `http://localhost:3000`.*
+
+Open **`http://localhost:3000`** in your browser to view and interact with DriftSense!
+
+---
+
+## 7. How to Use the Web Application (User Guide)
+
+### Using Demo Mode (Recommended)
+1. Click the **Run Demo** button in the top-right header bar.
+2. The web app automatically loads benchmark `sample_010` data.
+3. The search area animates a scanning line during localization.
+4. Upon completion, the UI displays:
+   - Target crosshair overlay with pixel coordinate rulers.
+   - 5-metric alignment results (Position, Drift, Rotation, Scale, NCC Confidence).
+   - Dynamic status badge (`MINOR DRIFT`).
+   - Stage correction vector graph drawing the arrow from `CURRENT` to `TARGET` position, showing `MOVE X` (`+3.76 px`) and `MOVE Y` (`-1.60 px`).
+
+### Manual Image Analysis Mode
+1. Under **Reference Image**, click **Upload** and select a 256×256 px reference image.
+2. Under **Search Image**, click **Upload** and select a 512×512 px search area image.
+3. Enter your **Expected Target Coordinates** (X and Y).
+4. Click **ANALYZE ALIGNMENT**.
+5. View the detected coordinates, navigation drift, and recommended stage movements.
+
+---
+
+## 8. How to Run Command-Line Tools (CLI Mode)
+
+If you prefer running commands directly in the terminal without a web browser:
+
+### 1. Run DriftSense Navigation Recovery CLI
+```bash
+python3 -m src.driftsense \
+    --reference data/sample_000/reference_image.png \
+    --search data/sample_000/search_image.png \
+    --expected-x 450 \
+    --expected-y 170 \
+    --output results/drift_result.json
+```
+
+### 2. Run Terminal Demonstration
+```bash
+python3 -m src.driftsense_demo
+```
+
+### 3. Run Pattern Localization Only
 ```bash
 python3 -m src.run_final \
     --reference data/sample_000/reference_image.png \
@@ -100,63 +276,50 @@ python3 -m src.run_final \
     --output results/prediction.json
 ```
 
----
-
-## 8. Running Demo
-
-Run the matching demo on success and failure wafer samples:
+### 4. Run Reproducibility & Integrity Audits
 ```bash
-python3 -m src.demo
-```
-
----
-
-## 9. Reproducibility
-
-Run the single-command validation check to verify hashes and baseline reproduction:
-```bash
+# Verify benchmark SHA-256 hashes and reproduction
 python3 -m src.verify_final_system
+
+# Validate drift recovery mathematical correctness
+python3 -m src.audit.validate_drift_recovery
+
+# Run final system audit log
+python3 -m src.audit.verify_drift_audit
 ```
 
 ---
 
-## 10. Project Structure
+## 9. Performance & Validation Results
 
-```
-.
-├── README.md
-├── requirements.txt
-├── config.yaml
-├── configs/
-│   └── final_system_config.json
-├── data/
-│   ├── sample_000/ to sample_039/ (Frozen Benchmark)
-│   └── robustness_samples/ (200 Independent Samples)
-├── reports/
-│   ├── final_freeze/ (Integrity hashes & benchmark metrics)
-│   ├── final_results/ (Plots, reports, & traceability logs)
-│   ├── FINAL_TECHNICAL_REPORT.md
-│   └── PROJECT_PRESENTATION.md
-├── src/
-│   ├── final_system.py (Production Entry Point)
-│   ├── run_final.py (CLI tool)
-│   ├── demo.py (Visual demonstration runner)
-│   ├── verify_final_system.py (Reproducibility suite)
-│   ├── audit/ (Auditing & plotting helpers)
-│   ├── visualization/ (Individual & composite plot script)
-│   ├── matching/ (Classical sub-pixel template matcher)
-│   └── hybrid/ (Patch extraction & candidate generation)
-└── venv/
-```
+The frozen system **"Classical NCC-Based Wafer Pattern Matching with High-Resolution Pose Refinement"** has been rigorously validated across multiple benchmark datasets:
+
+| Evaluation Dataset | Sample Count | Success Rate (%) | Median Loc Error (px) | Mean Rot Error (°) | Mean Scale Error | Avg Time (s) |
+|---|---|---|---|---|---|---|
+| **Frozen Benchmark** | 40 | **97.5% (39/40)** | 0.5280 px | 0.0910° | 0.00367 | 0.3666 s |
+| **Independent Robustness Set** | 200 | **97.5% (195/200)** | 0.5648 px | 0.0847° | 0.00489 | 0.3666 s |
 
 ---
 
-## 11. Navigation Drift Detection and Recovery
+## 10. Navigation Drift Mathematics
 
-The DriftSense coordinate recovery layer compares the expected nominal inspection coordinates against the actual detected targets. It computes coordinate corrections:
-- $\Delta x = x_{expected} - x_{detected}$
-- $\Delta y = y_{expected} - y_{detected}$
-- $Drift\ Magnitude = \sqrt{\Delta x^2 + \Delta y^2}$
+Navigation drift and stage correction vectors are calculated as follows:
+- **X-axis Drift**: $\Delta x = x_{expected} - x_{detected}$
+- **Y-axis Drift**: $\Delta y = y_{expected} - y_{detected}$
+- **Drift Magnitude**: $D = \sqrt{\Delta x^2 + \Delta y^2}$
 
-### Stage Control Disclaimer
-The current implementation provides pixel-space coordinate recovery. Conversion to physical stage displacement units such as microns requires a calibrated pixel-to-stage transformation matrix supplied by the inspection tool's hardware interface. The system does not directly command or actuate physical stages.
+### Status Classification:
+- **`ALIGNED`**: $D \le 1.0$ px
+- **`MINOR_DRIFT`**: $1.0 < D \le 5.0$ px
+- **`SIGNIFICANT_DRIFT`**: $D > 5.0$ px
+
+### Stage Correction Vector:
+To realign the wafer inspection tool over the intended target:
+$$\text{MOVE X} = \Delta x$$
+$$\text{MOVE Y} = \Delta y$$
+
+---
+
+## 11. Stage Control Disclaimer
+
+The current implementation provides pixel-space coordinate recovery. Conversion to physical stage displacement units such as microns requires a calibrated pixel-to-stage transformation matrix supplied by the inspection tool's hardware interface. The software does not directly actuate physical motors.
