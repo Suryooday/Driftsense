@@ -14,6 +14,7 @@ def create_submission_zip():
         "README.md",
         "requirements.txt",
         "COLAB_TRAINING.md",
+        "predict.py",
         "src/final_system.py",
         "src/drift_recovery.py",
         "src/driftsense.py",

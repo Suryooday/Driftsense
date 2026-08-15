@@ -249,31 +249,22 @@ Open **`http://localhost:3000`** in your browser to view and interact with Drift
 
 ---
 
-## 8. How to Run Command-Line Tools (CLI Mode)
+## 8. How to Run Model Inference & Evaluation (Judges Evaluation)
 
-If you prefer running commands directly in the terminal without a web browser:
+Judges can test the model on any custom test dataset CSV file using the universal `predict.py` script:
 
-### 1. Run DriftSense Navigation Recovery CLI
+### Batch CSV Evaluation Mode (Judges Test Dataset)
 ```bash
-python3 -m src.driftsense \
+python3 predict.py --input test_dataset.csv --output predictions.csv
+```
+*Processes all image pairs in the CSV (`search_image_path, reference_image_path`), outputs localized sub-pixel coordinates $(x, y)$, rotation, and scale to `predictions.csv`, and displays the 1px–5px Confusion Matrix accuracy table.*
+
+### Single Image Pair Mode
+```bash
+python3 predict.py \
     --reference data/sample_000/reference_image.png \
     --search data/sample_000/search_image.png \
-    --expected-x 450 \
-    --expected-y 170 \
-    --output results/drift_result.json
-```
-
-### 2. Run Terminal Demonstration
-```bash
-python3 -m src.driftsense_demo
-```
-
-### 3. Run Pattern Localization Only
-```bash
-python3 -m src.run_final \
-    --reference data/sample_000/reference_image.png \
-    --search data/sample_000/search_image.png \
-    --output results/prediction.json
+    --output prediction.json
 ```
 
 ### 5. Run Official Hackathon CSV Scoring Utility
