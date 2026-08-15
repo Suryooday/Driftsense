@@ -1,0 +1,153 @@
+{
+    "total_cases": 9,
+    "passed_cases": 9,
+    "failed_cases": 0,
+    "numerical_precision": "1e-12 (float64)",
+    "sign_convention_verified": true,
+    "test_results": [
+        {
+            "case_name": "Case 1: No Drift",
+            "expected": {
+                "x": 100.0,
+                "y": 100.0
+            },
+            "detected": {
+                "x": 100.0,
+                "y": 100.0
+            },
+            "dx": 0.0,
+            "dy": 0.0,
+            "magnitude": 0.0,
+            "status": "ALIGNED",
+            "passed": true
+        },
+        {
+            "case_name": "Case 2: Positive X Drift",
+            "expected": {
+                "x": 104.0,
+                "y": 100.0
+            },
+            "detected": {
+                "x": 100.0,
+                "y": 100.0
+            },
+            "dx": 4.0,
+            "dy": 0.0,
+            "magnitude": 4.0,
+            "status": "MINOR_DRIFT",
+            "passed": true
+        },
+        {
+            "case_name": "Case 3: Negative X Drift",
+            "expected": {
+                "x": 96.0,
+                "y": 100.0
+            },
+            "detected": {
+                "x": 100.0,
+                "y": 100.0
+            },
+            "dx": -4.0,
+            "dy": 0.0,
+            "magnitude": 4.0,
+            "status": "MINOR_DRIFT",
+            "passed": true
+        },
+        {
+            "case_name": "Case 4: Positive Y Drift",
+            "expected": {
+                "x": 100.0,
+                "y": 104.0
+            },
+            "detected": {
+                "x": 100.0,
+                "y": 100.0
+            },
+            "dx": 0.0,
+            "dy": 4.0,
+            "magnitude": 4.0,
+            "status": "MINOR_DRIFT",
+            "passed": true
+        },
+        {
+            "case_name": "Case 5: Negative Y Drift",
+            "expected": {
+                "x": 100.0,
+                "y": 96.0
+            },
+            "detected": {
+                "x": 100.0,
+                "y": 100.0
+            },
+            "dx": 0.0,
+            "dy": -4.0,
+            "magnitude": 4.0,
+            "status": "MINOR_DRIFT",
+            "passed": true
+        },
+        {
+            "case_name": "Case 6: Combined X & Y Drift",
+            "expected": {
+                "x": 106.0,
+                "y": 108.0
+            },
+            "detected": {
+                "x": 100.0,
+                "y": 100.0
+            },
+            "dx": 6.0,
+            "dy": 8.0,
+            "magnitude": 10.0,
+            "status": "SIGNIFICANT_DRIFT",
+            "passed": true
+        },
+        {
+            "case_name": "Case 7: Boundary Aligned Threshold",
+            "expected": {
+                "x": 101.0,
+                "y": 100.0
+            },
+            "detected": {
+                "x": 100.0,
+                "y": 100.0
+            },
+            "dx": 1.0,
+            "dy": 0.0,
+            "magnitude": 1.0,
+            "status": "ALIGNED",
+            "passed": true
+        },
+        {
+            "case_name": "Case 7b: Boundary Minor Threshold",
+            "expected": {
+                "x": 105.0,
+                "y": 100.0
+            },
+            "detected": {
+                "x": 100.0,
+                "y": 100.0
+            },
+            "dx": 5.0,
+            "dy": 0.0,
+            "magnitude": 5.0,
+            "status": "MINOR_DRIFT",
+            "passed": true
+        },
+        {
+            "case_name": "Case 7c: Just Above Minor Threshold",
+            "expected": {
+                "x": 105.01,
+                "y": 100.0
+            },
+            "detected": {
+                "x": 100.0,
+                "y": 100.0
+            },
+            "dx": 5.010000000000005,
+            "dy": 0.0,
+            "magnitude": 5.010000000000005,
+            "status": "SIGNIFICANT_DRIFT",
+            "passed": true
+        }
+    ]
+}

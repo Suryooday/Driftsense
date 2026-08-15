@@ -1,0 +1,18 @@
+{
+    "top1_ranking_accuracy": 0.618,
+    "pos_outranks_neg_rate": 0.618,
+    "mean_pos_similarity": 0.8502470245063305,
+    "mean_neg_similarity": 0.7735179765075445,
+    "margin_distribution": {
+        "p10": -0.06932860016822814,
+        "p50": 0.01989850401878357,
+        "p90": 0.35863639712333684
+    },
+    "category_accuracy": {
+        "random": 0.5117370892018779,
+        "nearby": 0.5076142131979695,
+        "repeated": 0.5621621621621622,
+        "wrong_geom": 0.9712918660287081,
+        "classical_hard": 0.5204081632653061
+    }
+}

@@ -1,0 +1,39 @@
+{
+    "accuracy": 0.9375,
+    "precision": 0.8888888888888888,
+    "recall": 1.0,
+    "f1": 0.9411764705882353,
+    "roc_auc": 0.97265625,
+    "confusion_matrix": [
+        [
+            14,
+            2
+        ],
+        [
+            0,
+            16
+        ]
+    ],
+    "num_pos": 16,
+    "num_neg": 16,
+    "pred_pos": 18,
+    "pred_neg": 14,
+    "hard_negatives": {
+        "random": {
+            "accuracy": 0.9545454545454546,
+            "count": 6
+        },
+        "nearby": {
+            "accuracy": 1.0,
+            "count": 0
+        },
+        "repeated": {
+            "accuracy": 1.0,
+            "count": 2
+        },
+        "wrong_geom": {
+            "accuracy": 1.0,
+            "count": 0
+        }
+    }
+}

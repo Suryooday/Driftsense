@@ -1,0 +1,24 @@
+{
+    "status": "PASS",
+    "robustness_sample_count": 200,
+    "robustness_canvas_seed_range": [
+        5000,
+        5199
+    ],
+    "robustness_degradation_seed_range": [
+        50000,
+        50199
+    ],
+    "overlap_counts": {
+        "canvas_seeds": 0,
+        "degradation_seeds": 0,
+        "image_hashes": 0,
+        "file_paths": 0
+    },
+    "overlaps": {
+        "canvas_seeds": [],
+        "degradation_seeds": [],
+        "image_hashes": [],
+        "file_paths": []
+    }
+}

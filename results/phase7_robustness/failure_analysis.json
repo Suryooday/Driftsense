@@ -1,0 +1,59 @@
+{
+    "total_failures": 5,
+    "failure_percentage": 2.5,
+    "failures": [
+        {
+            "sample_id": "sample_006",
+            "loc_error": 119.92425235933752,
+            "rot_error": 0.17974802303411952,
+            "scale_error": 0.002441281684047558,
+            "failed_criteria": [
+                "localization"
+            ],
+            "category": "Extreme noise/degradation"
+        },
+        {
+            "sample_id": "sample_054",
+            "loc_error": 0.6389792276328585,
+            "rot_error": 0.022892371922531463,
+            "scale_error": 0.021742692425986476,
+            "failed_criteria": [
+                "scale"
+            ],
+            "category": "Ambiguous correlation peaks"
+        },
+        {
+            "sample_id": "sample_092",
+            "loc_error": 81.24829513248942,
+            "rot_error": 0.27763806646346123,
+            "scale_error": 0.049198641702167034,
+            "failed_criteria": [
+                "localization",
+                "scale"
+            ],
+            "category": "Extreme noise/degradation"
+        },
+        {
+            "sample_id": "sample_121",
+            "loc_error": 415.0786742466504,
+            "rot_error": 0.05472921468587266,
+            "scale_error": 0.0023942006751984657,
+            "failed_criteria": [
+                "localization"
+            ],
+            "category": "Ambiguous correlation peaks"
+        },
+        {
+            "sample_id": "sample_166",
+            "loc_error": 320.1852973803655,
+            "rot_error": 0.5110352107869203,
+            "scale_error": 0.02154440303637095,
+            "failed_criteria": [
+                "localization",
+                "rotation",
+                "scale"
+            ],
+            "category": "Coupling of translation error into rotation refinement"
+        }
+    ]
+}

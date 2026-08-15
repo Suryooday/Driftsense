@@ -1,0 +1,82 @@
+[
+    {
+        "sample_id": "sample_000",
+        "dataset": "Frozen Benchmark",
+        "prediction_source": "data/final_predictions_benchmark.json",
+        "ground_truth_source": "data/sample_000/ground_truth.json",
+        "metadata_source": "data/sample_000/ground_truth.json",
+        "output_file": "reports/final_results/alignment_examples/success/sample_000_alignment.png"
+    },
+    {
+        "sample_id": "sample_010",
+        "dataset": "Robustness Set",
+        "prediction_source": "results/phase7_robustness/predictions.json",
+        "ground_truth_source": "data/robustness_samples/sample_010/ground_truth.json",
+        "metadata_source": "data/robustness_samples/sample_010/ground_truth.json",
+        "output_file": "reports/final_results/alignment_examples/success/sample_010_alignment.png"
+    },
+    {
+        "sample_id": "sample_020",
+        "dataset": "Robustness Set",
+        "prediction_source": "results/phase7_robustness/predictions.json",
+        "ground_truth_source": "data/robustness_samples/sample_020/ground_truth.json",
+        "metadata_source": "data/robustness_samples/sample_020/ground_truth.json",
+        "output_file": "reports/final_results/alignment_examples/success/sample_020_alignment.png"
+    },
+    {
+        "sample_id": "sample_030",
+        "dataset": "Robustness Set",
+        "prediction_source": "results/phase7_robustness/predictions.json",
+        "ground_truth_source": "data/robustness_samples/sample_030/ground_truth.json",
+        "metadata_source": "data/robustness_samples/sample_030/ground_truth.json",
+        "output_file": "reports/final_results/alignment_examples/success/sample_030_alignment.png"
+    },
+    {
+        "sample_id": "sample_021",
+        "dataset": "Frozen Benchmark",
+        "prediction_source": "data/final_predictions_benchmark.json",
+        "ground_truth_source": "data/sample_021/ground_truth.json",
+        "metadata_source": "data/sample_021/ground_truth.json",
+        "output_file": "reports/final_results/alignment_examples/frozen_failure/sample_021/sample_021_failure.png"
+    },
+    {
+        "sample_id": "sample_006",
+        "dataset": "Robustness Set",
+        "prediction_source": "results/phase7_robustness/predictions.json",
+        "ground_truth_source": "data/robustness_samples/sample_006/ground_truth.json",
+        "metadata_source": "data/robustness_samples/sample_006/ground_truth.json",
+        "output_file": "reports/final_results/alignment_examples/robustness_failures/sample_006_failure.png"
+    },
+    {
+        "sample_id": "sample_054",
+        "dataset": "Robustness Set",
+        "prediction_source": "results/phase7_robustness/predictions.json",
+        "ground_truth_source": "data/robustness_samples/sample_054/ground_truth.json",
+        "metadata_source": "data/robustness_samples/sample_054/ground_truth.json",
+        "output_file": "reports/final_results/alignment_examples/robustness_failures/sample_054_failure.png"
+    },
+    {
+        "sample_id": "sample_092",
+        "dataset": "Robustness Set",
+        "prediction_source": "results/phase7_robustness/predictions.json",
+        "ground_truth_source": "data/robustness_samples/sample_092/ground_truth.json",
+        "metadata_source": "data/robustness_samples/sample_092/ground_truth.json",
+        "output_file": "reports/final_results/alignment_examples/robustness_failures/sample_092_failure.png"
+    },
+    {
+        "sample_id": "sample_121",
+        "dataset": "Robustness Set",
+        "prediction_source": "results/phase7_robustness/predictions.json",
+        "ground_truth_source": "data/robustness_samples/sample_121/ground_truth.json",
+        "metadata_source": "data/robustness_samples/sample_121/ground_truth.json",
+        "output_file": "reports/final_results/alignment_examples/robustness_failures/sample_121_failure.png"
+    },
+    {
+        "sample_id": "sample_166",
+        "dataset": "Robustness Set",
+        "prediction_source": "results/phase7_robustness/predictions.json",
+        "ground_truth_source": "data/robustness_samples/sample_166/ground_truth.json",
+        "metadata_source": "data/robustness_samples/sample_166/ground_truth.json",
+        "output_file": "reports/final_results/alignment_examples/robustness_failures/sample_166_failure.png"
+    }
+]

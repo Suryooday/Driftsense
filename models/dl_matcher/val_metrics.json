@@ -1,0 +1,39 @@
+{
+    "accuracy": 0.3125,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "roc_auc": 0.6,
+    "confusion_matrix": [
+        [
+            10,
+            0
+        ],
+        [
+            22,
+            0
+        ]
+    ],
+    "num_pos": 22,
+    "num_neg": 10,
+    "pred_pos": 0,
+    "pred_neg": 32,
+    "hard_negatives": {
+        "random": {
+            "accuracy": 0.15384615384615385,
+            "count": 4
+        },
+        "nearby": {
+            "accuracy": 0.12,
+            "count": 3
+        },
+        "repeated": {
+            "accuracy": 0.0,
+            "count": 0
+        },
+        "wrong_geom": {
+            "accuracy": 0.0,
+            "count": 0
+        }
+    }
+}

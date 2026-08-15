@@ -1,0 +1,31 @@
+# ml_config.yaml
+
+# Master seeds to ensure reproducibility and strict separation
+train_seed: 1000
+val_seed: 2000
+dev_seed: 3000
+
+# Counts
+num_train: 40000
+num_val: 5000
+num_dev: 5000
+
+# Patch Sizes
+reference_size: [256, 256]    # Height, Width of reference patch
+candidate_size: [256, 256]    # Height, Width of candidate patch
+
+# Relative zoom of reference compared to search.
+# (Reference represents a 100x zoom, candidate represents search at 10x, zoom ratio is 5.0)
+zoom_ratio: 5.0
+
+# Degradation parameter ranges (same as config.yaml)
+pattern_densities: [0.1, 0.4]
+rotation_bounds: [-3.0, 3.0]
+scale_bounds: [0.97, 1.03]
+noise_range: [0.01, 0.06]
+speckle_range: [0.01, 0.05]
+blur_range: [0.5, 1.5]
+charging_amplitude_range: [40, 90]
+
+# Output settings
+output_dir: "data/ml_dataset"

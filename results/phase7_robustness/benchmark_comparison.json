@@ -1,0 +1,26 @@
+{
+    "success_rate": {
+        "benchmark": 0.975,
+        "robustness": 0.975
+    },
+    "mean_loc": {
+        "benchmark": 0.5425,
+        "robustness": 5.237102955096755
+    },
+    "median_loc": {
+        "benchmark": 0.528,
+        "robustness": 0.5648401434751208
+    },
+    "mean_rot": {
+        "benchmark": 0.091,
+        "robustness": 0.08465529478499967
+    },
+    "mean_scale": {
+        "benchmark": 0.00367,
+        "robustness": 0.004887284099579914
+    },
+    "mean_time": {
+        "benchmark": 0.6267,
+        "robustness": 0.3665504273009719
+    }
+}

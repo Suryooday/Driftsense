@@ -1,0 +1,184 @@
+{
+    "system": {
+        "name": "Classical NCC-based wafer matching with high-resolution pose refinement",
+        "version": "frozen_final"
+    },
+    "frozen_benchmark": {
+        "sample_count": 40,
+        "success_count": 39,
+        "failure_count": 1,
+        "success_rate": 0.975,
+        "mean_location_error": 0.5425091977587233,
+        "median_location_error": 0.5279979965753747,
+        "max_location_error": 0.8810700208232901,
+        "mean_rotation_error": 0.09102313493654936,
+        "median_rotation_error": 0.059235297145362284,
+        "max_rotation_error": 0.543536723182906,
+        "mean_scale_error": 0.003673389653201811,
+        "median_scale_error": 0.002374699717801687,
+        "max_scale_error": 0.011844156007075446,
+        "mean_inference_time": 0.325110381245031
+    },
+    "robustness_evaluation": {
+        "sample_count": 200,
+        "success_count": 195,
+        "failure_count": 5,
+        "success_rate": 0.975,
+        "mean_location_error": 5.237102955096755,
+        "median_location_error": 0.5648401434751208,
+        "p95_location_error": 0.7722610616464991,
+        "max_location_error": 415.0786742466504,
+        "mean_rotation_error": 0.08465529478499967,
+        "median_rotation_error": 0.06165399198347554,
+        "p95_rotation_error": 0.2312804519894315,
+        "max_rotation_error": 0.5110352107869203,
+        "mean_scale_error": 0.004887284099579914,
+        "median_scale_error": 0.003779855403418131,
+        "p95_scale_error": 0.011835048107203759,
+        "max_scale_error": 0.049198641702167034,
+        "mean_inference_time": 0.3665504273009719,
+        "bootstrap_ci_success_rate": [
+            0.95,
+            0.995
+        ],
+        "bootstrap_ci_mean_loc_error": [
+            0.9688806830774163,
+            11.457992500560218
+        ],
+        "noise_breakdown": {
+            "low": {
+                "total": 31,
+                "ok": 31,
+                "success_rate": 1.0
+            },
+            "medium": {
+                "total": 81,
+                "ok": 79,
+                "success_rate": 0.9753086419753086
+            },
+            "high": {
+                "total": 88,
+                "ok": 85,
+                "success_rate": 0.9659090909090909
+            }
+        }
+    },
+    "ablation_results": {
+        "original_phase3": {
+            "success_rate": 0.775,
+            "mean_loc": 0.5425078060257486,
+            "mean_rot": 0.25240384630774904,
+            "mean_scale": 0.008008817516669233,
+            "avg_time": 0.615299521930865
+        },
+        "classical_plus_refinement": {
+            "success_rate": 0.975,
+            "mean_loc": 0.5425078060257486,
+            "mean_rot": 0.09102313493654936,
+            "mean_scale": 0.003673389653201811,
+            "avg_time": 0.6267399823700543
+        },
+        "dl_matcher_v1": {
+            "success_rate": 0.275,
+            "mean_loc": 143.41260908974124,
+            "mean_rot": 0.40166650863489933,
+            "mean_scale": 0.014311702511522122,
+            "avg_time": 0.6153055906906957
+        },
+        "hybrid_fusion": {
+            "success_rate": 0.725,
+            "mean_loc": 17.310358269404837,
+            "mean_rot": 0.235372974478753,
+            "mean_scale": 0.00809876525868281,
+            "avg_time": 0.6153036427946063
+        },
+        "dl_matcher_v2": {
+            "success_rate": "NOT TRACEABLE",
+            "mean_loc": "NOT TRACEABLE",
+            "mean_rot": "NOT TRACEABLE",
+            "mean_scale": "NOT TRACEABLE",
+            "avg_time": "NOT TRACEABLE"
+        },
+        "final_frozen_system": {
+            "success_rate": 0.975,
+            "mean_loc": 0.5425091977587233,
+            "mean_rot": 0.09102313493654936,
+            "mean_scale": 0.003673389653201811,
+            "avg_time": 0.325110381245031
+        }
+    },
+    "failure_analysis": {
+        "benchmark_failures": [
+            {
+                "sample_id": "sample_021",
+                "loc_error": 0.8811,
+                "rot_error": 0.5435,
+                "scale_error": 0.0077,
+                "failed_criteria": [
+                    "rotation"
+                ]
+            }
+        ],
+        "robustness_failures": [
+            {
+                "sample_id": "sample_006",
+                "loc_error": 119.92425235933752,
+                "rot_error": 0.17974802303411952,
+                "scale_error": 0.002441281684047558,
+                "failed_criteria": [
+                    "localization"
+                ],
+                "category": "Extreme noise/degradation"
+            },
+            {
+                "sample_id": "sample_054",
+                "loc_error": 0.6389792276328585,
+                "rot_error": 0.022892371922531463,
+                "scale_error": 0.021742692425986476,
+                "failed_criteria": [
+                    "scale"
+                ],
+                "category": "Ambiguous correlation peaks"
+            },
+            {
+                "sample_id": "sample_092",
+                "loc_error": 81.24829513248942,
+                "rot_error": 0.27763806646346123,
+                "scale_error": 0.049198641702167034,
+                "failed_criteria": [
+                    "localization",
+                    "scale"
+                ],
+                "category": "Extreme noise/degradation"
+            },
+            {
+                "sample_id": "sample_121",
+                "loc_error": 415.0786742466504,
+                "rot_error": 0.05472921468587266,
+                "scale_error": 0.0023942006751984657,
+                "failed_criteria": [
+                    "localization"
+                ],
+                "category": "Ambiguous correlation peaks"
+            },
+            {
+                "sample_id": "sample_166",
+                "loc_error": 320.1852973803655,
+                "rot_error": 0.5110352107869203,
+                "scale_error": 0.02154440303637095,
+                "failed_criteria": [
+                    "localization",
+                    "rotation",
+                    "scale"
+                ],
+                "category": "Coupling of translation error into rotation refinement"
+            }
+        ]
+    },
+    "reproducibility": {
+        "success_rate_matched": true,
+        "mean_loc_matched": true,
+        "mean_rot_matched": true,
+        "mean_scale_matched": true
+    }
+}

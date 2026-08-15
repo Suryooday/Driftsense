@@ -1,0 +1,116 @@
+[
+    {
+        "metric_name": "frozen_benchmark.success_rate",
+        "value": "0.975",
+        "source_file": "reports/final_freeze/benchmark_metrics.json",
+        "source_section_or_key": "success_rate"
+    },
+    {
+        "metric_name": "frozen_benchmark.mean_location_error",
+        "value": "0.5425091977587233",
+        "source_file": "reports/final_freeze/benchmark_metrics.json",
+        "source_section_or_key": "mean_loc"
+    },
+    {
+        "metric_name": "frozen_benchmark.median_location_error",
+        "value": "0.5279979965753747",
+        "source_file": "reports/final_freeze/benchmark_metrics.json",
+        "source_section_or_key": "median_loc"
+    },
+    {
+        "metric_name": "frozen_benchmark.mean_rotation_error",
+        "value": "0.09102313493654936",
+        "source_file": "reports/final_freeze/benchmark_metrics.json",
+        "source_section_or_key": "mean_rot"
+    },
+    {
+        "metric_name": "frozen_benchmark.mean_scale_error",
+        "value": "0.003673389653201811",
+        "source_file": "reports/final_freeze/benchmark_metrics.json",
+        "source_section_or_key": "mean_scale"
+    },
+    {
+        "metric_name": "robustness_evaluation.success_rate",
+        "value": "0.975",
+        "source_file": "results/phase7_robustness/aggregate_metrics.json",
+        "source_section_or_key": "success_rate"
+    },
+    {
+        "metric_name": "robustness_evaluation.median_location_error",
+        "value": "0.5648401434751208",
+        "source_file": "results/phase7_robustness/aggregate_metrics.json",
+        "source_section_or_key": "median_loc"
+    },
+    {
+        "metric_name": "robustness_evaluation.p95_location_error",
+        "value": "0.7722610616464991",
+        "source_file": "results/phase7_robustness/aggregate_metrics.json",
+        "source_section_or_key": "p95_loc"
+    },
+    {
+        "metric_name": "robustness_evaluation.max_location_error",
+        "value": "415.0786742466504",
+        "source_file": "results/phase7_robustness/aggregate_metrics.json",
+        "source_section_or_key": "max_loc"
+    },
+    {
+        "metric_name": "robustness_evaluation.mean_rotation_error",
+        "value": "0.08465529478499967",
+        "source_file": "results/phase7_robustness/aggregate_metrics.json",
+        "source_section_or_key": "mean_rot"
+    },
+    {
+        "metric_name": "robustness_evaluation.median_rotation_error",
+        "value": "0.06165399198347554",
+        "source_file": "results/phase7_robustness/aggregate_metrics.json",
+        "source_section_or_key": "median_rot"
+    },
+    {
+        "metric_name": "robustness_evaluation.max_rotation_error",
+        "value": "0.5110352107869203",
+        "source_file": "results/phase7_robustness/aggregate_metrics.json",
+        "source_section_or_key": "max_rot"
+    },
+    {
+        "metric_name": "robustness_evaluation.mean_scale_error",
+        "value": "0.004887284099579914",
+        "source_file": "results/phase7_robustness/aggregate_metrics.json",
+        "source_section_or_key": "mean_scale"
+    },
+    {
+        "metric_name": "robustness_evaluation.bootstrap_ci_success_rate",
+        "value": "[0.95, 0.995]",
+        "source_file": "results/phase7_robustness/aggregate_metrics.json",
+        "source_section_or_key": "bootstrap.success_rate_ci"
+    },
+    {
+        "metric_name": "robustness_evaluation.bootstrap_ci_mean_loc_error",
+        "value": "[0.9688806830774163, 11.457992500560218]",
+        "source_file": "results/phase7_robustness/aggregate_metrics.json",
+        "source_section_or_key": "bootstrap.mean_loc_error_ci"
+    },
+    {
+        "metric_name": "ablation.original_phase3.success_rate",
+        "value": "77.5",
+        "source_file": "/Users/suryodaypratapsingh/.gemini/antigravity-ide/brain/c671e24d-edc4-49b9-bae8-8a90c5016352/scratch/audit_data.json",
+        "source_section_or_key": "summary.Original Phase 3.success_rate"
+    },
+    {
+        "metric_name": "ablation.classical_plus_refinement.success_rate",
+        "value": "97.5",
+        "source_file": "/Users/suryodaypratapsingh/.gemini/antigravity-ide/brain/c671e24d-edc4-49b9-bae8-8a90c5016352/scratch/audit_data.json",
+        "source_section_or_key": "summary.Classical + Refinement.success_rate"
+    },
+    {
+        "metric_name": "ablation.dl_matcher_v1.success_rate",
+        "value": "27.500000000000004",
+        "source_file": "/Users/suryodaypratapsingh/.gemini/antigravity-ide/brain/c671e24d-edc4-49b9-bae8-8a90c5016352/scratch/audit_data.json",
+        "source_section_or_key": "summary.DL Reranking.success_rate"
+    },
+    {
+        "metric_name": "ablation.hybrid_fusion.success_rate",
+        "value": "72.5",
+        "source_file": "/Users/suryodaypratapsingh/.gemini/antigravity-ide/brain/c671e24d-edc4-49b9-bae8-8a90c5016352/scratch/audit_data.json",
+        "source_section_or_key": "summary.Hybrid Fusion.success_rate"
+    }
+]

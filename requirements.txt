@@ -1,0 +1,9 @@
+# Core Production matching Dependencies (PyTorch-free)
+numpy>=1.20.0
+opencv-python>=4.5.0
+pyyaml>=5.0.0
+matplotlib>=3.3.0
+
+# Optional Experimental Deep Learning Dependencies
+# torch>=2.0.0
+# torchvision>=0.15.0

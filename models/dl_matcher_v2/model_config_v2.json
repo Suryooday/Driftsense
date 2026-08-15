@@ -1,0 +1,9 @@
+{
+    "backbone": "resnet18",
+    "embedding_dim": 128,
+    "pretrained": true,
+    "margin": 0.2,
+    "lambda_rank": 1.0,
+    "lambda_cls": 1.0,
+    "learning_rate": 0.001
+}

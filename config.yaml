@@ -1,0 +1,23 @@
+# config.yaml
+
+# General parameters
+seed: 42
+num_samples: 40
+
+# Image sizes
+search_size: [512, 512]       # Height, Width of search image (pixels)
+reference_size: [256, 256]    # Height, Width of reference image (pixels)
+zoom_ratio: 5.0               # Relative zoom of reference compared to search (e.g. 50x vs 10x)
+
+# Pattern parameters
+pattern_densities: [0.1, 0.4] # Min, max pattern density / grid spacing range
+
+# Transform drift bounds
+rotation_bounds: [-3.0, 3.0]  # Rotation drift range (degrees)
+scale_bounds: [0.97, 1.03]    # Scale drift range
+
+# Degradation parameters
+noise_range: [0.01, 0.06]     # Additive Gaussian noise range (std dev, fraction of max pixel)
+speckle_range: [0.01, 0.05]   # Multiplicative speckle noise range (std dev)
+blur_range: [0.5, 1.5]        # Gaussian blur sigma range
+charging_amplitude_range: [40, 90] # SEM charging effect peak amplitude range (pixel values)
