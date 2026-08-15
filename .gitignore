@@ -41,3 +41,6 @@ env/
 
 # Data files
 /data/
+
+# Zip archives
+*.zip

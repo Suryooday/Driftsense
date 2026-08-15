@@ -276,17 +276,13 @@ python3 -m src.run_final \
     --output results/prediction.json
 ```
 
-### 4. Run Reproducibility & Integrity Audits
+### 5. Run Official Hackathon CSV Scoring Utility
 ```bash
-# Verify benchmark SHA-256 hashes and reproduction
-python3 -m src.verify_final_system
-
-# Validate drift recovery mathematical correctness
-python3 -m src.audit.validate_drift_recovery
-
-# Run final system audit log
-python3 -m src.audit.verify_drift_audit
+python3 -m src.scoring.eval_dataset_csv \
+    --csv data/benchmark_ground_truth.csv \
+    --output-csv results/eval_results.csv
 ```
+*Evaluates the pattern matcher against any ground truth CSV (`search_image_path, reference_image_path, GTx, GTy`) and outputs the 1px–5px Confusion Matrix and accuracy statistics.*
 
 ---
 
