@@ -18,23 +18,45 @@ Supports two operational modes:
 import os
 import sys
 import csv
+import io
 import math
 import time
 import argparse
 import json
+from pathlib import Path
 import numpy as np
 import cv2
 
 from src.final_system import FinalSystemMatcher
 
+PROJECT_ROOT = Path(__file__).resolve().parent
+
 def find_column(headers: list, candidates: list) -> str:
-    headers_lower = [h.strip().lower() for h in headers]
+    headers_clean = [h.strip().strip("\ufeff\"'").lower() for h in headers]
     for cand in candidates:
-        cand_lower = cand.lower()
-        if cand_lower in headers_lower:
-            idx = headers_lower.index(cand_lower)
+        cand_clean = cand.lower()
+        if cand_clean in headers_clean:
+            idx = headers_clean.index(cand_clean)
             return headers[idx]
     return ""
+
+def resolve_image_path(p_str: str) -> str:
+    p_clean = p_str.strip().strip("\"'").replace("\\", "/")
+    
+    candidates = [
+        Path(p_clean),
+        PROJECT_ROOT / p_clean,
+        PROJECT_ROOT / p_clean.lstrip("/"),
+        PROJECT_ROOT / "data" / p_clean,
+        PROJECT_ROOT / "data" / p_clean.lstrip("/"),
+        PROJECT_ROOT / "data" / Path(p_clean).name,
+    ]
+    
+    for cand in candidates:
+        if cand.exists() and cand.is_file():
+            return str(cand.resolve())
+            
+    return p_clean
 
 def process_single_pair(matcher: FinalSystemMatcher, ref_path: str, srch_path: str, output_path: str):
     if not os.path.exists(ref_path):
@@ -74,52 +96,81 @@ def process_csv(matcher: FinalSystemMatcher, input_csv: str, output_csv: str):
 
     print(f"Loading evaluation dataset CSV: {input_csv}")
 
+    with open(input_csv, "r", encoding="utf-8-sig", errors="ignore") as f:
+        text = f.read()
+
+    delimiter = ","
+    if "\t" in text.splitlines()[0]:
+        delimiter = "\t"
+    elif ";" in text.splitlines()[0] and "," not in text.splitlines()[0]:
+        delimiter = ";"
+
+    f_stream = io_string = io.StringIO(text)
+    reader = csv.DictReader(f_stream, delimiter=delimiter)
+    headers = reader.fieldnames or []
+
+    srch_synonyms = [
+        "wide search image path", "search_image_path", "search_path", "search", "search_image",
+        "search_img", "search_file", "searchimage", "searchpath", "wide_search", "image_search",
+        "search_image_file", "search_filename", "search_name"
+    ]
+    ref_synonyms = [
+        "reference image path", "reference_image_path", "ref_path", "reference", "ref_image",
+        "ref_img", "ref_file", "referenceimage", "referencepath", "ref", "template_image",
+        "template_path", "template", "ref_image_file", "reference_filename", "ref_name"
+    ]
+    gtx_synonyms = ["gtx", "gt_x", "true_x", "x_gt", "target_x", "x", "x_center", "center_x", "gt_center_x", "true_center_x"]
+    gty_synonyms = ["gty", "gt_y", "true_y", "y_gt", "target_y", "y", "y_center", "center_y", "gt_center_y", "true_center_y"]
+
+    col_srch = find_column(headers, srch_synonyms)
+    col_ref  = find_column(headers, ref_synonyms)
+    col_gtx  = find_column(headers, gtx_synonyms)
+    col_gty  = find_column(headers, gty_synonyms)
+
+    if not (col_srch and col_ref):
+        print(f"Error: Could not detect image path columns in CSV header: {headers}")
+        print("Supported search column names: 'search_image_path', 'wide search image path', 'search_path', 'search', 'search_image'")
+        print("Supported reference column names: 'reference_image_path', 'ref_path', 'reference', 'ref_image'")
+        sys.exit(1)
+
     rows = []
-    headers = []
-    with open(input_csv, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        headers = reader.fieldnames or []
-
-        col_srch = find_column(headers, ["wide search image path", "search_image_path", "search_path", "search", "search_image"])
-        col_ref  = find_column(headers, ["reference image path", "reference_image_path", "ref_path", "reference", "ref_image"])
-        col_gtx  = find_column(headers, ["gtx", "gt_x", "true_x", "x_gt", "target_x"])
-        col_gty  = find_column(headers, ["gty", "gt_y", "true_y", "y_gt", "target_y"])
-
-        if not (col_srch and col_ref):
-            print(f"Error: Could not detect image path columns in CSV header: {headers}")
-            print("Supported search column names: 'search_image_path', 'wide search image path', 'search_path', 'search'")
-            print("Supported reference column names: 'reference_image_path', 'ref_path', 'reference'")
-            sys.exit(1)
-
-        for r in reader:
-            item = {
-                "search_path": r[col_srch].strip(),
-                "ref_path": r[col_ref].strip()
-            }
-            if col_gtx and col_gty and r[col_gtx] and r[col_gty]:
-                try:
-                    item["gt_x"] = float(r[col_gtx])
-                    item["gt_y"] = float(r[col_gty])
-                except ValueError:
-                    pass
-            rows.append(item)
+    for r in reader:
+        item = {
+            "search_path": r[col_srch].strip(),
+            "ref_path": r[col_ref].strip()
+        }
+        if col_gtx and col_gty and r.get(col_gtx) and r.get(col_gty):
+            try:
+                item["gt_x"] = float(r[col_gtx].strip())
+                item["gt_y"] = float(r[col_gty].strip())
+            except ValueError:
+                pass
+        rows.append(item)
 
     print(f"Running model inference on {len(rows)} image pairs...")
 
     output_rows = []
     total_time = 0.0
     errors = []
+    missing_paths = []
 
     for i, item in enumerate(rows):
         srch_path = item["search_path"]
         ref_path = item["ref_path"]
 
-        if not os.path.exists(srch_path) or not os.path.exists(ref_path):
-            print(f"[{i+1}/{len(rows)}] Warning: Image path missing ({srch_path} or {ref_path}). Skipping.")
+        resolved_srch = resolve_image_path(srch_path)
+        resolved_ref = resolve_image_path(ref_path)
+
+        if not os.path.exists(resolved_srch) or not os.path.exists(resolved_ref):
+            missing_paths.append((srch_path, ref_path))
             continue
 
-        srch_img = cv2.imread(srch_path, cv2.IMREAD_GRAYSCALE)
-        ref_img = cv2.imread(ref_path, cv2.IMREAD_GRAYSCALE)
+        srch_img = cv2.imread(resolved_srch, cv2.IMREAD_GRAYSCALE)
+        ref_img = cv2.imread(resolved_ref, cv2.IMREAD_GRAYSCALE)
+
+        if srch_img is None or ref_img is None:
+            missing_paths.append((srch_path, ref_path))
+            continue
 
         t0 = time.perf_counter()
         pred = matcher.match(ref_img, srch_img)
@@ -155,9 +206,16 @@ def process_csv(matcher: FinalSystemMatcher, input_csv: str, output_csv: str):
 
         output_rows.append(out_item)
 
+    if not output_rows:
+        sample_missing = missing_paths[0] if missing_paths else ("unknown", "unknown")
+        print(f"Error: Could not locate image files referenced in CSV on disk.")
+        print(f"Example missing pair: '{sample_missing[0]}' and '{sample_missing[1]}'")
+        print("Please verify image files exist locally in the project directory.")
+        sys.exit(1)
+
     # Write output CSV
     os.makedirs(os.path.dirname(os.path.abspath(output_csv)), exist_ok=True)
-    fieldnames = list(output_rows[0].keys()) if output_rows else []
+    fieldnames = list(output_rows[0].keys())
     with open(output_csv, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
