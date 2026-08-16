@@ -13,8 +13,14 @@ import { AlignmentResults } from "@/components/alignment-results";
 import { DriftStatus } from "@/components/drift-status";
 import { StageRecovery } from "@/components/stage-recovery";
 import { ProcessFlow } from "@/components/process-flow";
+import { CsvBatchViewer } from "@/components/csv-batch-viewer";
+
+import { Crosshair, FileSpreadsheet } from "lucide-react";
 
 export default function Home() {
+  // Mode selection: 'single' or 'batch'
+  const [activeTab, setActiveTab] = useState<"single" | "batch">("single");
+
   // State
   const [isOnline, setIsOnline] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,6 +45,7 @@ export default function Home() {
 
   // Demo mode
   const handleRunDemo = useCallback(async () => {
+    setActiveTab("single");
     setIsLoading(true);
     setIsAnalyzing(true);
     setResult(null);
@@ -119,40 +126,79 @@ export default function Home() {
 
       <HeroSection />
 
-      {/* Analysis Workspace */}
-      <section className="border-t border-gray-100 bg-white py-10">
+      {/* Mode Switcher Tabs */}
+      <section className="border-t border-gray-100 bg-white pt-6 pb-2">
         <div className="mx-auto max-w-7xl px-8">
-          <div className="grid grid-cols-2 gap-12">
-            <ReferenceViewer imageSrc={refSrc} />
-            <SearchViewer
-              imageSrc={srchSrc}
-              detected={result ? result.detected : null}
-              isAnalyzing={isAnalyzing}
-            />
+          <div className="flex border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab("single")}
+              className={`flex items-center gap-2 border-b-2 px-6 py-3 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                activeTab === "single"
+                  ? "border-[#1E3A5F] text-[#1E3A5F]"
+                  : "border-transparent text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <Crosshair className="h-4 w-4" />
+              Single Image Analysis
+            </button>
+
+            <button
+              onClick={() => setActiveTab("batch")}
+              className={`flex items-center gap-2 border-b-2 px-6 py-3 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                activeTab === "batch"
+                  ? "border-[#1E3A5F] text-[#1E3A5F]"
+                  : "border-transparent text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Batch CSV Evaluation
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Controls */}
-      <AnalysisControls
-        expectedX={expectedX}
-        expectedY={expectedY}
-        onExpectedXChange={setExpectedX}
-        onExpectedYChange={setExpectedY}
-        onAnalyze={handleAnalyze}
-        onReferenceUpload={handleRefUpload}
-        onSearchUpload={handleSrchUpload}
-        isLoading={isLoading}
-        hasImages={!!(refFile && srchFile)}
-      />
-
-      {/* Results */}
-      {result && (
+      {/* Tab Content */}
+      {activeTab === "single" ? (
         <>
-          <AlignmentResults result={result} />
-          <DriftStatus drift={result.drift} />
-          <StageRecovery result={result} />
+          {/* Single Analysis Workspace */}
+          <section className="bg-white py-8">
+            <div className="mx-auto max-w-7xl px-8">
+              <div className="grid grid-cols-2 gap-12">
+                <ReferenceViewer imageSrc={refSrc} />
+                <SearchViewer
+                  imageSrc={srchSrc}
+                  detected={result ? result.detected : null}
+                  isAnalyzing={isAnalyzing}
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Controls */}
+          <AnalysisControls
+            expectedX={expectedX}
+            expectedY={expectedY}
+            onExpectedXChange={setExpectedX}
+            onExpectedYChange={setExpectedY}
+            onAnalyze={handleAnalyze}
+            onReferenceUpload={handleRefUpload}
+            onSearchUpload={handleSrchUpload}
+            isLoading={isLoading}
+            hasImages={!!(refFile && srchFile)}
+          />
+
+          {/* Results */}
+          {result && (
+            <>
+              <AlignmentResults result={result} />
+              <DriftStatus drift={result.drift} />
+              <StageRecovery result={result} />
+            </>
+          )}
         </>
+      ) : (
+        /* Batch CSV Evaluation Workspace */
+        <CsvBatchViewer />
       )}
 
       <ProcessFlow />

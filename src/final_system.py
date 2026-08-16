@@ -18,6 +18,8 @@ def load_final_config(config_path: str = "configs/final_system_config.json") -> 
         return json.load(f)
 
 def ncc(im1: np.ndarray, im2: np.ndarray) -> float:
+    if im1.shape != im2.shape:
+        im2 = cv2.resize(im2, (im1.shape[1], im1.shape[0]), interpolation=cv2.INTER_LINEAR)
     im1_f = im1.astype(float) - np.mean(im1)
     im2_f = im2.astype(float) - np.mean(im2)
     denom = np.linalg.norm(im1_f) * np.linalg.norm(im2_f)

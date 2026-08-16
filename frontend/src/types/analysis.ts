@@ -40,3 +40,47 @@ export interface DemoResult {
   search_image_b64: string;
   sample_id: string;
 }
+
+// --- CSV Batch Evaluation Types ---
+
+export interface PairEvaluationResult {
+  index: number;
+  search_image_path: string;
+  reference_image_path: string;
+  detected_x?: number;
+  detected_y?: number;
+  gt_x?: number;
+  gt_y?: number;
+  loc_error?: number;
+  rotation?: number;
+  scale?: number;
+  confidence: number;
+  elapsed_s: number;
+}
+
+export interface AccuracyThreshold {
+  threshold_px: number;
+  correct_count: number;
+  failed_count: number;
+  accuracy_pct: number;
+}
+
+export interface BucketCount {
+  bucket: string;
+  count: number;
+  percentage: number;
+}
+
+export interface CsvBatchSummary {
+  total_pairs: number;
+  mean_loc_error?: number;
+  median_loc_error?: number;
+  avg_inference_time_s: number;
+  accuracy_breakdown: AccuracyThreshold[];
+  confusion_matrix: BucketCount[];
+}
+
+export interface CsvBatchResponse {
+  summary: CsvBatchSummary;
+  results: PairEvaluationResult[];
+}
