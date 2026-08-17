@@ -44,3 +44,8 @@ env/
 
 # Zip archives
 *.zip
+
+# macOS system files
+.DS_Store
+*.DS_Store
+**/.DS_Store
