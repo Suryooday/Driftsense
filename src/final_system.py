@@ -48,6 +48,15 @@ class FinalSystemMatcher:
     def match(self, reference: np.ndarray, search: np.ndarray, sample_id: str = "unknown") -> Dict[str, Any]:
         t_start = time.perf_counter()
         
+        # Adaptive zoom ratio: 10.0 for ~1000x1000 search images, 5.0 for ~512x512 search images
+        sh, sw = search.shape[:2]
+        if sh >= 800:
+            effective_zoom = 10.0
+        else:
+            effective_zoom = self.zoom_ratio
+            
+        self.candidate_generator.zoom_ratio = effective_zoom
+        
         # 1. Candidate Generation (Classical)
         candidates = self.candidate_generator.generate_candidates(reference, search, k=self.num_candidates_k)
         
@@ -90,12 +99,12 @@ class FinalSystemMatcher:
                 refined_rot = r
                 
         # Optimize scale
-        drift_s_center = refined_scale / self.zoom_ratio
+        drift_s_center = refined_scale / effective_zoom
         ds_span = self.ref_cfg["scale"]["drift_span"]
         s_steps = self.ref_cfg["scale"]["scale_steps"]
         drift_scale_grid = np.linspace(drift_s_center - ds_span, drift_s_center + ds_span, s_steps)
         for ds in drift_scale_grid:
-            s = ds * self.zoom_ratio
+            s = ds * effective_zoom
             patch = self.patch_extractor.extract_candidate_patch(
                 search, best_cand["x"], best_cand["y"], refined_rot, s
             )
