@@ -80,10 +80,13 @@ def main():
         print("Reproducibility: FAIL (Validation script missing)")
         sys.exit(1)
         
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.path.abspath(".")
     res = subprocess.run(
         [sys.executable, val_script],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=env,
         text=True
     )
     

@@ -4,6 +4,54 @@ DriftSense is an automated semiconductor wafer inspection system built for the S
 
 ---
 
+## ⚡ Reviewer Quickstart (Evaluate in 30 Seconds)
+
+To test the system on custom or synthetic datasets immediately, follow these simple steps:
+
+### 1. Set Up Python Environment
+Ensure you have Python 3.10+ installed. Activate the virtual environment and install dependencies:
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Install required packages
+pip install -r requirements.txt
+```
+
+### 2. Generate Synthetic Image Pairs (DRAM or FinFET)
+Use the standalone procedurally controlled dataset generator:
+```bash
+# Generate 5 DRAM pattern pairs
+python3 generate_dataset.py --style DRAM --num_pairs 5 --output_dir data/generated_dram
+
+# Generate 5 FinFET pattern pairs
+python3 generate_dataset.py --style FinFET --num_pairs 5 --output_dir data/generated_finfet
+```
+This generates reference patterns, drifted search fields, and writes the exact ground truth coordinates to `data/generated_dram/ground_truth.csv` and `data/generated_finfet/ground_truth.csv`.
+
+### 3. Run Pattern Localization Inference
+Execute the localization runner on any reference and search image pair. It runs in **~0.3 seconds** with sub-pixel and sub-degree accuracy:
+```bash
+# Run on a generated DRAM sample pair (using positional arguments)
+python3 localize.py data/generated_dram/sample_000/reference_image.png data/generated_dram/sample_000/search_image.png
+```
+**Output Example:**
+```
+(x, y) = (257.6521, 255.4312)
+{
+  "predicted_center": {
+    "x": 257.6521,
+    "y": 255.4312
+  },
+  "rotation_degrees": -1.0421,
+  "scale": 4.9812,
+  "confidence_score": 0.8942,
+  "inference_time_seconds": 0.3541
+}
+```
+
+---
+
 ## 1. Project Overview (What is DriftSense?)
 
 ### The Semiconductor Wafer Problem
@@ -139,6 +187,9 @@ Below is a detailed list of all project folders and files, explaining what each 
 │   ├── PROJECT_PRESENTATION.md     # Hackathon presentation slides
 │   └── drift_recovery/             # Validation JSONs, audit markdown logs, & figures
 │
+├── generate_dataset.py             # Standalone DRAM/FinFET synthetic wafer pattern generator
+├── localize.py                     # Standalone pattern localization inference script
+├── CITATIONS.md                    # Literature references for SEM noise and matching algorithms
 ├── requirements.txt                # Main Python environment dependencies
 └── README.md                       # Main project documentation (this file)
 ```
@@ -259,12 +310,14 @@ python3 predict.py --input test_dataset.csv --output predictions.csv
 ```
 *Processes all image pairs in the CSV (`search_image_path, reference_image_path`), outputs localized sub-pixel coordinates $(x, y)$, rotation, and scale to `predictions.csv`, and displays the 1px–5px Confusion Matrix accuracy table.*
 
-### Single Image Pair Mode
+### Single Image Pair Mode (Evaluation via `localize.py`)
+Run the standalone localization inference script with either positional or keyword arguments:
 ```bash
-python3 predict.py \
-    --reference data/sample_000/reference_image.png \
-    --search data/sample_000/search_image.png \
-    --output prediction.json
+# Positional Arguments
+python3 localize.py data/sample_000/reference_image.png data/sample_000/search_image.png
+
+# Keyword Arguments (with optional output path to save JSON results)
+python3 localize.py --reference data/sample_000/reference_image.png --search data/sample_000/search_image.png --output results/prediction.json
 ```
 
 ### 5. Run Official Hackathon CSV Scoring Utility
