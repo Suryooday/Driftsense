@@ -1,14 +1,14 @@
 {
-    "zoom_ratio": 5.0,
+    "zoom_ratio": 10.0,
     "reference_size": [256, 256],
-    "search_size": [512, 512],
+    "search_size": [1000, 1000],
     "candidate_generation": {
         "nms_radius": 20,
-        "rot_steps_coarse": 13,
-        "scale_steps_coarse": 7,
-        "rot_range_deg": [-3.0, 3.0],
-        "scale_range": [0.97, 1.03],
-        "num_candidates_k": 5
+        "rot_steps_coarse": 21,
+        "scale_steps_coarse": 9,
+        "rot_range_deg": [-5.0, 5.0],
+        "scale_range": [0.8, 1.2],
+        "num_candidates_k": 10
     },
     "pose_refinement": {
         "iteration_1": {
@@ -16,8 +16,8 @@
             "rot_steps": 15
         },
         "scale": {
-            "drift_span": 0.015,
-            "scale_steps": 11
+            "drift_span": 0.035,
+            "scale_steps": 15
         },
         "iteration_2": {
             "rot_span_deg": 0.2,
@@ -27,5 +27,14 @@
     "drift_thresholds": {
         "aligned_max_px": 1.0,
         "minor_drift_max_px": 5.0
+    },
+    "found_threshold": 0.40,
+    "combined_threshold": 0.57,
+    "ssim_floor": 0.0,
+    "_notes": {
+        "optimal_ncc_ssim": "NCC=0.38 + SSIM=0.53 → combined F1=0.498 (DetF1=0.603, RejF1=0.392)",
+        "ncc_only":         "NCC=0.40 → DetF1=0.821 (best detection, poor rejection)",
+        "set_c_limitation": "Set B degraded (SSIM~0.21-0.33) and Set C absent (SSIM~0.32-0.59) overlap — classical features cannot perfectly separate them",
+        "ssim_floor_0":     "SSIM gate disabled; only NCC primary gate active"
     }
 }

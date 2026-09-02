@@ -32,7 +32,10 @@ export interface AnalysisResult {
   confidence: ConfidenceInfo;
   stage_correction: StageCorrection;
   inference_time_s: number;
+  search_width: number;
+  search_height: number;
 }
+
 
 export interface DemoResult {
   analysis: AnalysisResult;

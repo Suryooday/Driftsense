@@ -44,6 +44,9 @@ class AnalysisResponse(BaseModel):
     confidence: ConfidenceInfo
     stage_correction: StageCorrection
     inference_time_s: float
+    search_width: float
+    search_height: float
+
 
 
 class DemoResponse(BaseModel):

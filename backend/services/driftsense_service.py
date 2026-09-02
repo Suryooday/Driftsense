@@ -42,22 +42,29 @@ class DriftSenseService:
         pred_y = match_result["predicted_y"]
 
         # Guard against matching failure
-        if pred_x is None or pred_y is None:
+        if pred_x is None or pred_y is None or match_result.get("found", 1) == 0:
+            sh, sw = search.shape[:2]
             return {
                 "expected": {"x": expected_x, "y": expected_y},
                 "detected": {"x": 0.0, "y": 0.0},
                 "drift": {"dx": 0.0, "dy": 0.0, "magnitude": 0.0, "status": "MATCH_FAILED"},
                 "pose": {"rotation": 0.0, "scale": 0.0},
-                "confidence": {"ncc_score": 0.0},
+                "confidence": {"ncc_score": float(match_result.get("confidence_score", 0.0))},
                 "stage_correction": {"move_x": 0.0, "move_y": 0.0},
                 "inference_time_s": match_result["elapsed_s"],
+                "search_width": float(sw),
+                "search_height": float(sh),
             }
+
+
 
         # 2. Run drift recovery
         drift_result = self.recovery.calculate_drift(
             expected_target={"x": expected_x, "y": expected_y},
             detected_target={"x": pred_x, "y": pred_y},
         )
+
+        sh, sw = search.shape[:2]
 
         return {
             "expected": {"x": expected_x, "y": expected_y},
@@ -80,4 +87,7 @@ class DriftSenseService:
                 "move_y": round(drift_result["recommended_correction"]["y_pixels"], 4),
             },
             "inference_time_s": round(match_result["elapsed_s"], 4),
+            "search_width": float(sw),
+            "search_height": float(sh),
         }
+

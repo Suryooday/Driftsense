@@ -42,6 +42,12 @@ env/
 # Data files
 /data/
 
+# Generated raw image directories (reproducible via generate_phase2.py)
+output/reference/
+output/search/
+output_200/reference/
+output_200/search/
+
 # Zip archives
 *.zip
 

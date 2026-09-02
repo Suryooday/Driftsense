@@ -54,8 +54,8 @@ service = DriftSenseService(config_path="configs/final_system_config.json")
 # Constants
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEMO_SAMPLE_ID = "sample_010"
-DEMO_SAMPLE_DIR = PROJECT_ROOT / "data" / DEMO_SAMPLE_ID
+DEMO_SAMPLE_ID = "sample_000"
+DEMO_SAMPLE_DIR = PROJECT_ROOT / "data" / "phase2_test_data" / DEMO_SAMPLE_ID
 
 
 # ---------------------------------------------------------------------------
@@ -145,8 +145,8 @@ def demo():
         gt = json.load(f)
 
     # Offset expected coordinates to simulate a visible MINOR_DRIFT scenario
-    expected_x = gt["true_x"] + 3.5
-    expected_y = gt["true_y"] - 2.0
+    expected_x = gt["true_x"] + 2.1
+    expected_y = gt["true_y"] - 1.5
 
     result = service.run_analysis(ref_img, srch_img, expected_x, expected_y)
 

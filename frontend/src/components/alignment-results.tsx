@@ -32,13 +32,15 @@ export function AlignmentResults({ result }: AlignmentResultsProps) {
         </h3>
 
         <div className="grid grid-cols-5 gap-8">
-          <MetricCard label="Detected Position">
+          <MetricCard label="Detected Position (Rel to Center)">
             <p className="font-mono text-lg font-medium text-[#1A1A2E]">
-              {result.detected.x.toFixed(2)}{" "}
+              X: {result.detected.x - result.search_width / 2 >= 0 ? "+" : ""}
+              {(result.detected.x - result.search_width / 2).toFixed(2)}{" "}
               <span className="text-xs text-gray-400">px</span>
             </p>
             <p className="font-mono text-lg font-medium text-[#1A1A2E]">
-              {result.detected.y.toFixed(2)}{" "}
+              Y: {result.detected.y - result.search_height / 2 >= 0 ? "+" : ""}
+              {(result.detected.y - result.search_height / 2).toFixed(2)}{" "}
               <span className="text-xs text-gray-400">px</span>
             </p>
           </MetricCard>

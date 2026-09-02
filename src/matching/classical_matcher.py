@@ -65,18 +65,30 @@ def _build_rotated_template(
         Warped grayscale template as uint8.
     """
     h, w = reference.shape
-    cx, cy = w / 2.0, h / 2.0
-    # Invert rotation direction: we rotate the template to match the drifted reference
-    M = cv2.getRotationMatrix2D((cx, cy), -angle, scale_to_search)
-    out_w = max(1, int(round(w * scale_to_search)))
-    out_h = max(1, int(round(h * scale_to_search)))
-    M[0, 2] += out_w / 2.0 - cx
-    M[1, 2] += out_h / 2.0 - cy
-    return cv2.warpAffine(
-        reference, M, (out_w, out_h),
-        flags=cv2.INTER_LINEAR,
-        borderMode=cv2.BORDER_REFLECT,
-    )
+    if scale_to_search < 0.9:
+        out_w = max(1, int(round(w * scale_to_search)))
+        out_h = max(1, int(round(h * scale_to_search)))
+        resized = cv2.resize(reference, (out_w, out_h), interpolation=cv2.INTER_AREA)
+        cx, cy = out_w / 2.0, out_h / 2.0
+        M = cv2.getRotationMatrix2D((cx, cy), -angle, 1.0)
+        return cv2.warpAffine(
+            resized, M, (out_w, out_h),
+            flags=cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_REFLECT,
+        )
+    else:
+        cx, cy = w / 2.0, h / 2.0
+        # Invert rotation direction: we rotate the template to match the drifted reference
+        M = cv2.getRotationMatrix2D((cx, cy), -angle, scale_to_search)
+        out_w = max(1, int(round(w * scale_to_search)))
+        out_h = max(1, int(round(h * scale_to_search)))
+        M[0, 2] += out_w / 2.0 - cx
+        M[1, 2] += out_h / 2.0 - cy
+        return cv2.warpAffine(
+            reference, M, (out_w, out_h),
+            flags=cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_REFLECT,
+        )
 
 
 def _extract_top_k_peaks(

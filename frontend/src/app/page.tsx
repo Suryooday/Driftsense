@@ -169,6 +169,9 @@ export default function Home() {
                   imageSrc={srchSrc}
                   detected={result ? result.detected : null}
                   isAnalyzing={isAnalyzing}
+                  searchWidth={result ? result.search_width : 512}
+                  searchHeight={result ? result.search_height : 512}
+                  matchFailed={result ? result.drift.status === "MATCH_FAILED" : false}
                 />
               </div>
             </div>

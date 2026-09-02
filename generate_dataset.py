@@ -238,15 +238,38 @@ def apply_charging_effect(
     }
     return np.clip(image + charging_profile, 0.0, 255.0), params
 
+def apply_poisson_gaussian_noise(
+    image: np.ndarray,
+    poisson_scale: float,
+    gaussian_std: float,
+    rng: np.random.Generator
+) -> np.ndarray:
+    """
+    Applies signal-dependent Poisson noise mixed with Gaussian thermal noise.
+    I_noisy = Poisson(I * alpha) / alpha + Normal(0, sigma^2)
+    where alpha (poisson_scale) maps intensity to electron counts.
+    """
+    img = image.astype(np.float32)
+    if poisson_scale > 0.0:
+        scaled = np.maximum(img * poisson_scale, 0.0)
+        noisy = rng.poisson(scaled).astype(np.float32) / poisson_scale
+    else:
+        noisy = img
+    if gaussian_std > 0.0:
+        gauss = rng.normal(0.0, gaussian_std, img.shape).astype(np.float32)
+        noisy = noisy + gauss
+    return np.clip(noisy, 0.0, 255.0)
+
 def apply_degradations(
     image: np.ndarray,
     noise_std: float,
     speckle_std: float,
     blur_sigma: float,
     charging_amp: float,
-    rng: np.random.Generator
+    rng: np.random.Generator,
+    use_poisson: bool = True
 ) -> Tuple[np.ndarray, Optional[Dict[str, float]]]:
-    """Applies Gaussian noise, speckle noise, blur, and charging degradations."""
+    """Applies Gaussian/Poisson noise, speckle noise, blur, and charging degradations."""
     img = image.copy()
     charging_params = None
 
@@ -258,9 +281,18 @@ def apply_degradations(
     if abs(charging_amp) > 0.0:
         img, charging_params = apply_charging_effect(img, charging_amp, rng)
 
-    if noise_std > 0.0:
-        gauss_noise = rng.normal(0.0, noise_std * 255.0, img.shape).astype(np.float32)
-        img = img + gauss_noise
+    if use_poisson:
+        # Map noise_std (typically 0.01 - 0.06) to poisson_scale. 
+        # Lower noise_std -> higher poisson_scale (more electrons, less shot noise)
+        # We can define poisson_scale = 1.0 / (noise_std ** 2) as a physical relation
+        p_scale = 1.0 / max(1e-5, noise_std ** 2) if noise_std > 0.0 else 0.0
+        # Thermal Gaussian noise scales with noise_std as well
+        g_std = noise_std * 127.5 # up to ~8 gray levels at 0.06
+        img = apply_poisson_gaussian_noise(img, p_scale, g_std, rng)
+    else:
+        if noise_std > 0.0:
+            gauss_noise = rng.normal(0.0, noise_std * 255.0, img.shape).astype(np.float32)
+            img = img + gauss_noise
 
     if speckle_std > 0.0:
         speckle_noise = rng.normal(0.0, speckle_std, img.shape).astype(np.float32)
@@ -279,19 +311,31 @@ def main() -> None:
                         help="Output directory path where dataset will be saved.")
     parser.add_argument("--seed", type=int, default=42,
                         help="Random seed for procedural generation reproducibility.")
+    parser.add_argument("--phase2", action="store_true", default=True,
+                        help="Generate Phase 2 compliant dataset (1000x1000 px, [8,12] scale, ±5 deg, absent pairs).")
+    parser.add_argument("--absent_prob", type=float, default=0.20,
+                        help="Probability of generating an absent pair (found = 0).")
     args = parser.parse_args()
 
-    print(f"Generating {args.num_pairs} wafer pattern pairs for style '{args.style}'...")
+    print(f"Generating {args.num_pairs} wafer pattern pairs for style '{args.style}' (Phase 2: {args.phase2})...")
     config = load_config("config.yaml")
 
     rng = np.random.default_rng(args.seed)
-    search_h, search_w = config.get("search_size", [512, 512])
-    ref_h, ref_w = config.get("reference_size", [256, 256])
-    zoom_ratio = config.get("zoom_ratio", 5.0)
+    
+    if args.phase2:
+        search_h, search_w = 1000, 1000
+        ref_h, ref_w = 256, 256
+        zoom_ratio = 10.0
+        rot_min, rot_max = -5.0, 5.0
+        scale_min, scale_max = 0.8, 1.2 # yields final scale in [8.0, 12.0]
+    else:
+        search_h, search_w = config.get("search_size", [512, 512])
+        ref_h, ref_w = config.get("reference_size", [256, 256])
+        zoom_ratio = config.get("zoom_ratio", 5.0)
+        rot_min, rot_max = config.get("rotation_bounds", [-3.0, 3.0])
+        scale_min, scale_max = config.get("scale_bounds", [0.97, 1.03])
 
     # Establish parameter bounds
-    rot_min, rot_max = config.get("rotation_bounds", [-3.0, 3.0])
-    scale_min, scale_max = config.get("scale_bounds", [0.97, 1.03])
     noise_min, noise_max = config.get("noise_range", [0.01, 0.06])
     speckle_min, speckle_max = config.get("speckle_range", [0.01, 0.05])
     blur_min, blur_max = config.get("blur_range", [0.5, 1.5])
@@ -312,14 +356,17 @@ def main() -> None:
         sample_rot = rng.uniform(rot_min, rot_max)
         sample_scale = rng.uniform(scale_min, scale_max)
 
+        # Determine if this pair is absent (found = 0)
+        is_absent = (rng.uniform() < args.absent_prob) if args.phase2 else False
+
         # Allocate canvas space to extract patches without borders
         search_canvas_w = int(search_w * zoom_ratio)
         search_canvas_h = int(search_h * zoom_ratio)
         canvas_w = search_canvas_w + 1000
         canvas_h = search_canvas_h + 1000
 
-        # Generate unique procedurally tiled canvas
-        canvas = generate_wafer_canvas(canvas_w, canvas_h, sample_density, args.style, rng)
+        # Generate unique procedurally tiled canvas for the search image
+        canvas_search = generate_wafer_canvas(canvas_w, canvas_h, sample_density, args.style, rng)
 
         # Randomize search crop coordinate center
         search_cx = rng.uniform(search_canvas_w / 2.0, canvas_w - search_canvas_w / 2.0)
@@ -327,36 +374,53 @@ def main() -> None:
 
         # Extract search region
         search_crop_canvas = extract_transformed_patch(
-            canvas, center=(search_cx, search_cy), size=(search_canvas_w, search_canvas_h), angle_deg=0.0, scale=1.0
+            canvas_search, center=(search_cx, search_cy), size=(search_canvas_w, search_canvas_h), angle_deg=0.0, scale=1.0
         )
         search_img_clean = cv2.resize(search_crop_canvas, (search_w, search_h), interpolation=cv2.INTER_AREA)
 
-        # Randomize reference crop center within search crop bounds
-        margin_x = ref_w / 2.0
-        margin_y = ref_h / 2.0
-        max_offset_x = (search_canvas_w / 2.0) - margin_x
-        max_offset_y = (search_canvas_h / 2.0) - margin_y
+        # If absent, generate a COMPLETELY separate canvas with same style but different density to represent another die region
+        if is_absent:
+            ref_density = rng.uniform(density_min, density_max)
+            # Generate a different canvas
+            canvas_ref = generate_wafer_canvas(canvas_w, canvas_h, ref_density, args.style, rng)
+            # Pick a center on the reference canvas
+            ref_cx = rng.uniform(search_canvas_w / 2.0, canvas_w - search_canvas_w / 2.0)
+            ref_cy = rng.uniform(search_canvas_h / 2.0, canvas_h - search_canvas_h / 2.0)
+            # Ground truths are zero or null for absent pairs
+            true_x, true_y = 0.0, 0.0
+            scale_factor = 0.0
+            rotation_deg = 0.0
+            found = 0
+        else:
+            canvas_ref = canvas_search
+            # Randomize reference crop center within search crop bounds (representing stage drift)
+            # Drift is typically small (within 5.0 pixels in search image space)
+            max_drift_search_px = 5.0
+            max_drift_canvas = max_drift_search_px * zoom_ratio
+            
+            offset_x_canvas = rng.uniform(-max_drift_canvas, max_drift_canvas)
+            offset_y_canvas = rng.uniform(-max_drift_canvas, max_drift_canvas)
 
-        offset_x_canvas = rng.uniform(-max_offset_x, max_offset_x)
-        offset_y_canvas = rng.uniform(-max_offset_y, max_offset_y)
+            ref_cx = search_cx + offset_x_canvas
+            ref_cy = search_cy + offset_y_canvas
 
-        ref_cx = search_cx + offset_x_canvas
-        ref_cy = search_cy + offset_y_canvas
+            # Calculate true center in search image coordinate space
+            tl_x_canvas = search_cx - (search_canvas_w / 2.0)
+            tl_y_canvas = search_cy - (search_canvas_h / 2.0)
+            true_x = (ref_cx - tl_x_canvas) / zoom_ratio
+            true_y = (ref_cy - tl_y_canvas) / zoom_ratio
+            scale_factor = sample_scale * zoom_ratio
+            rotation_deg = sample_rot
+            found = 1
 
         # Extract reference patch
         ref_img_clean = extract_transformed_patch(
-            canvas, center=(ref_cx, ref_cy), size=(ref_w, ref_h), angle_deg=sample_rot, scale=sample_scale
+            canvas_ref, center=(ref_cx, ref_cy), size=(ref_w, ref_h), angle_deg=sample_rot, scale=sample_scale
         )
         
         ref_img_clean_no_drift = extract_transformed_patch(
-            canvas, center=(ref_cx, ref_cy), size=(ref_w, ref_h), angle_deg=0.0, scale=1.0
+            canvas_ref, center=(ref_cx, ref_cy), size=(ref_w, ref_h), angle_deg=0.0, scale=1.0
         )
-
-        # Calculate true center in 512x512 search image coordinate space
-        tl_x_canvas = search_cx - (search_canvas_w / 2.0)
-        tl_y_canvas = search_cy - (search_canvas_h / 2.0)
-        true_x = (ref_cx - tl_x_canvas) / zoom_ratio
-        true_y = (ref_cy - tl_y_canvas) / zoom_ratio
 
         # Apply physical electron beam degradations
         search_img, search_charge = apply_degradations(
@@ -384,13 +448,14 @@ def main() -> None:
         gt_data = {
             "true_x": float(true_x),
             "true_y": float(true_y),
-            "rotation_deg": float(sample_rot),
-            "scale_factor": float(sample_scale * zoom_ratio),
+            "rotation_deg": float(rotation_deg),
+            "scale_factor": float(scale_factor),
             "drift_scale": float(sample_scale),
             "zoom_ratio": float(zoom_ratio),
             "noise_level": float(sample_noise),
             "charging_effect": search_charge,
-            "style": args.style
+            "style": args.style,
+            "found": int(found)
         }
         with open(os.path.join(sample_dir, "ground_truth.json"), "w") as f:
             json.dump(gt_data, f, indent=4)
@@ -401,12 +466,15 @@ def main() -> None:
             "reference_image_path": os.path.abspath(ref_rel_path),
             "GTx": round(true_x, 4),
             "GTy": round(true_y, 4),
+            "GT_theta": round(rotation_deg, 4),
+            "GT_scale": round(scale_factor, 4),
+            "GT_found": int(found),
             "style": args.style
         })
 
     # Write central CSV registry
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["search_image_path", "reference_image_path", "GTx", "GTy", "style"])
+        writer = csv.DictWriter(f, fieldnames=["search_image_path", "reference_image_path", "GTx", "GTy", "GT_theta", "GT_scale", "GT_found", "style"])
         writer.writeheader()
         writer.writerows(csv_rows)
 

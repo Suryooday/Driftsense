@@ -1,0 +1,27 @@
+================================================================================
+                 DRIFT-SENSE PHASE 2 — BASELINE CALIBRATION REPORT               
+================================================================================
+Total Evaluated Pairs: 200 (Total Runtime: 333.91s, Avg: 1.670s/pair)
+Target Present Credit Band: [0.30, 0.55]
+Achieved Present Mean Credit: 0.7125 ⚠️ OUTSIDE BAND
+Median Present Center Error: 0.50 px
+--------------------------------------------------------------------------------
+Confusion Matrix: TP=124, FP=2, TN=38, FN=36
+Presence Detection -> Precision: 0.9841, Recall: 0.7750, F1-Score: 0.8671
+Present Peak Range: [0.1375, 0.9868]
+Absent Peak Range:  [0.2331, 0.5566]
+Separation Gap (min_pres - max_abs): -0.4191 (Desirable negative overlap)
+--------------------------------------------------------------------------------
+BREAKDOWN BY SET:
+  Set A: Count=80, Mean Credit=0.9250, Median Error=0.43 px, Mean Peak=0.8777
+  Set B: Count=60, Mean Credit=0.4167, Median Error=383.41 px, Mean Peak=0.5303
+  Set C: Count=40, Mean Credit=0.9500, Median Error=0.00 px, Mean Peak=0.4142
+  Set D: Count=20, Mean Credit=0.7500, Median Error=0.66 px, Mean Peak=0.6552
+--------------------------------------------------------------------------------
+SET B SEVERITY MONOTONICITY AUDIT:
+  Severity 1: Count=15, Mean Credit=0.8000, Median Error=0.40 px
+  Severity 2: Count=15, Mean Credit=0.8000, Median Error=0.54 px
+  Severity 3: Count=15, Mean Credit=0.0667, Median Error=694.27 px
+  Severity 4: Count=15, Mean Credit=0.0000, Median Error=794.19 px
+Severity Monotonicity Status: ✅ STRICTLY MONOTONIC
+================================================================================
