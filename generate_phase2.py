@@ -474,9 +474,15 @@ def main():
         writer.writeheader()
         writer.writerows(ground_truth_rows)
 
-    # 3. Write manifest.csv (internal audit)
+    # 3. Write manifest.csv and manifest_jury.csv (internal audit / jury sheet)
     manifest_csv_path = os.path.join(output_dir, "manifest.csv")
     with open(manifest_csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(manifest_rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(manifest_rows)
+
+    jury_csv_path = os.path.join(output_dir, "manifest_jury.csv")
+    with open(jury_csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(manifest_rows[0].keys()))
         writer.writeheader()
         writer.writerows(manifest_rows)
