@@ -54,8 +54,9 @@ service = DriftSenseService(config_path="configs/final_system_config.json")
 # Constants
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEMO_SAMPLE_ID = "sample_000"
-DEMO_SAMPLE_DIR = PROJECT_ROOT / "data" / "phase2_test_data" / DEMO_SAMPLE_ID
+DEMO_SAMPLE_ID = "p000"
+DEMO_REF_PATH = PROJECT_ROOT / "output" / "reference" / f"{DEMO_SAMPLE_ID}.png"
+DEMO_SRCH_PATH = PROJECT_ROOT / "output" / "search" / f"{DEMO_SAMPLE_ID}.png"
 
 
 # ---------------------------------------------------------------------------
@@ -135,31 +136,24 @@ async def analyze(
 
 @app.get("/api/demo", response_model=DemoResponse)
 def demo():
-    ref_path = DEMO_SAMPLE_DIR / "reference_image.png"
-    srch_path = DEMO_SAMPLE_DIR / "search_image.png"
-    gt_path = DEMO_SAMPLE_DIR / "ground_truth.json"
+    ref_path = DEMO_REF_PATH
+    srch_path = DEMO_SRCH_PATH
 
-    # Fallback to output/ benchmark pair p000 if legacy data directory is not present
-    if not (ref_path.exists() and srch_path.exists() and gt_path.exists()):
-        alt_ref = PROJECT_ROOT / "output" / "reference" / "p000.png"
-        alt_srch = PROJECT_ROOT / "output" / "search" / "p000.png"
-        if alt_ref.exists() and alt_srch.exists():
-            ref_path = alt_ref
-            srch_path = alt_srch
-            expected_x = 350.7061 + 2.1
-            expected_y = 738.0373 - 1.5
-            sample_id = "p000"
-        else:
-            raise HTTPException(status_code=500, detail="Demo sample data not found on disk.")
-    else:
-        with open(gt_path, "r") as f:
-            gt = json.load(f)
-        expected_x = gt["true_x"] + 2.1
-        expected_y = gt["true_y"] - 1.5
-        sample_id = DEMO_SAMPLE_ID
+    # Fallback to output_200 if output is missing
+    if not (ref_path.exists() and srch_path.exists()):
+        ref_path = PROJECT_ROOT / "output_200" / "reference" / f"{DEMO_SAMPLE_ID}.png"
+        srch_path = PROJECT_ROOT / "output_200" / "search" / f"{DEMO_SAMPLE_ID}.png"
+
+    if not (ref_path.exists() and srch_path.exists()):
+        raise HTTPException(status_code=500, detail=f"Demo sample {DEMO_SAMPLE_ID} not found on disk.")
 
     ref_img = cv2.imread(str(ref_path), cv2.IMREAD_GRAYSCALE)
     srch_img = cv2.imread(str(srch_path), cv2.IMREAD_GRAYSCALE)
+
+    # Ground truth for p000 is x=350.7061, y=738.0373.
+    # Offset expected slightly to demonstrate a live MINOR_DRIFT navigation recovery
+    expected_x = 350.7061 + 2.1
+    expected_y = 738.0373 - 1.5
 
     result = service.run_analysis(ref_img, srch_img, expected_x, expected_y)
 
@@ -167,7 +161,7 @@ def demo():
         analysis=AnalysisResponse(**result),
         reference_image_b64=_img_to_b64(ref_path),
         search_image_b64=_img_to_b64(srch_path),
-        sample_id=sample_id,
+        sample_id=DEMO_SAMPLE_ID,
     )
 
 
