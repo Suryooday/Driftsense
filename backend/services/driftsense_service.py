@@ -80,6 +80,7 @@ class DriftSenseService:
                 "inference_time_s": match_result["elapsed_s"],
                 "search_width": float(sw),
                 "search_height": float(sh),
+                "found": 0,
             }
 
         # 2. Run drift recovery
@@ -113,4 +114,5 @@ class DriftSenseService:
             "inference_time_s": round(match_result["elapsed_s"], 4),
             "search_width": float(sw),
             "search_height": float(sh),
+            "found": int(match_result.get("found", 1)),
         }

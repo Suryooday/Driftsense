@@ -233,38 +233,68 @@ export function CsvBatchViewer() {
                 <table className="w-full text-left font-mono text-xs">
                   <thead className="sticky top-0 bg-gray-50 text-gray-400 border-b border-gray-200">
                     <tr>
-                      <th className="p-2 font-medium">#</th>
+                      <th className="p-2 font-medium">Pair ID</th>
+                      <th className="p-2 font-medium">Status</th>
                       <th className="p-2 font-medium">Search Image</th>
                       <th className="p-2 font-medium">Reference Image</th>
                       <th className="p-2 font-medium">Detected (X, Y)</th>
-                      <th className="p-2 font-medium">Ground Truth (X, Y)</th>
+                      <th className="p-2 font-medium">GT (X, Y)</th>
                       <th className="p-2 font-medium">Loc Error</th>
+                      <th className="p-2 font-medium">Rot (θ)</th>
+                      <th className="p-2 font-medium">Scale (z)</th>
                       <th className="p-2 font-medium">Confidence</th>
-                      <th className="p-2 font-medium">Time</th>
+                      <th className="p-2 font-medium">Latency</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-gray-700">
                     {filteredResults.map((r) => (
                       <tr key={r.index} className="hover:bg-gray-50/50">
-                        <td className="p-2 text-gray-400">{r.index}</td>
-                        <td className="p-2 truncate max-w-xs" title={r.search_image_path}>
-                          {r.search_image_path}
+                        <td className="p-2 font-semibold text-gray-600">{r.pair_id || `#${r.index}`}</td>
+                        <td className="p-2">
+                          {r.found === 0 ? (
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                              ABSENT / REJ
+                            </span>
+                          ) : r.loc_error !== undefined && r.loc_error !== null ? (
+                            r.loc_error <= 1.0 ? (
+                              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                ALIGNED
+                              </span>
+                            ) : r.loc_error <= 5.0 ? (
+                              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                MINOR DRIFT
+                              </span>
+                            ) : (
+                              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                LARGE DRIFT
+                              </span>
+                            )
+                          ) : (
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                              DETECTED
+                            </span>
+                          )}
                         </td>
-                        <td className="p-2 truncate max-w-xs" title={r.reference_image_path}>
-                          {r.reference_image_path}
+                        <td className="p-2 truncate max-w-[120px]" title={r.search_image_path}>
+                          {r.search_image_path.split("/").pop()}
+                        </td>
+                        <td className="p-2 truncate max-w-[120px]" title={r.reference_image_path}>
+                          {r.reference_image_path.split("/").pop()}
                         </td>
                         <td className="p-2 font-semibold">
-                          {r.detected_x !== null && r.detected_y !== null
-                            ? `(${r.detected_x?.toFixed(2)}, ${r.detected_y?.toFixed(2)})`
-                            : "FAIL"}
+                          {r.found !== 0 && r.detected_x !== null && r.detected_y !== null
+                            ? `(${r.detected_x?.toFixed(1)}, ${r.detected_y?.toFixed(1)})`
+                            : "—"}
                         </td>
                         <td className="p-2 text-gray-500">
                           {r.gt_x !== undefined && r.gt_y !== undefined
-                            ? `(${r.gt_x?.toFixed(2)}, ${r.gt_y?.toFixed(2)})`
+                            ? `(${r.gt_x?.toFixed(1)}, ${r.gt_y?.toFixed(1)})`
                             : "N/A"}
                         </td>
                         <td className="p-2">
-                          {r.loc_error !== undefined && r.loc_error !== null ? (
+                          {r.found === 0 ? (
+                            <span className="text-gray-400 font-normal">N/A (Absent)</span>
+                          ) : r.loc_error !== undefined && r.loc_error !== null ? (
                             <span
                               className={`font-semibold ${
                                 r.loc_error <= 1.0
@@ -274,14 +304,20 @@ export function CsvBatchViewer() {
                                   : "text-red-600"
                               }`}
                             >
-                              {r.loc_error.toFixed(4)} px
+                              {r.loc_error.toFixed(2)} px
                             </span>
                           ) : (
                             "N/A"
                           )}
                         </td>
-                        <td className="p-2 text-gray-500">{r.confidence.toFixed(3)} NCC</td>
-                        <td className="p-2 text-gray-400">{(r.elapsed_s * 1000).toFixed(0)} ms</td>
+                        <td className="p-2 text-gray-600">
+                          {r.rotation !== undefined && r.rotation !== null ? `${r.rotation >= 0 ? "+" : ""}${r.rotation.toFixed(1)}°` : "—"}
+                        </td>
+                        <td className="p-2 text-gray-600">
+                          {r.scale !== undefined && r.scale !== null ? `${r.scale.toFixed(1)}×` : "—"}
+                        </td>
+                        <td className="p-2 font-mono text-gray-700">{r.confidence.toFixed(4)}</td>
+                        <td className="p-2 text-gray-400">{(r.elapsed_s).toFixed(2)}s</td>
                       </tr>
                     ))}
                   </tbody>

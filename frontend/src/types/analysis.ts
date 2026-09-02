@@ -34,6 +34,7 @@ export interface AnalysisResult {
   inference_time_s: number;
   search_width: number;
   search_height: number;
+  found?: number;
 }
 
 
@@ -48,6 +49,7 @@ export interface DemoResult {
 
 export interface PairEvaluationResult {
   index: number;
+  pair_id?: string;
   search_image_path: string;
   reference_image_path: string;
   detected_x?: number;
@@ -58,6 +60,8 @@ export interface PairEvaluationResult {
   rotation?: number;
   scale?: number;
   confidence: number;
+  found?: number;
+  status?: string;
   elapsed_s: number;
 }
 

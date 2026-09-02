@@ -192,10 +192,15 @@ async def analyze_csv(file: UploadFile = File(...)):
     gtx_synonyms = ["gtx", "gt_x", "true_x", "x_gt", "target_x", "x", "x_center", "center_x", "gt_center_x", "true_center_x"]
     gty_synonyms = ["gty", "gt_y", "true_y", "y_gt", "target_y", "y", "y_center", "center_y", "gt_center_y", "true_center_y"]
 
+    pair_synonyms = ["pair_id", "pairid", "id", "pair", "sample_id"]
+    present_synonyms = ["present", "found", "gt_present", "target_present"]
+
     col_srch = _find_column(headers, srch_synonyms)
     col_ref = _find_column(headers, ref_synonyms)
     col_gtx = _find_column(headers, gtx_synonyms)
     col_gty = _find_column(headers, gty_synonyms)
+    col_pid = _find_column(headers, pair_synonyms)
+    col_pres = _find_column(headers, present_synonyms)
 
     if not (col_srch and col_ref):
         raise HTTPException(
@@ -208,6 +213,8 @@ async def analyze_csv(file: UploadFile = File(...)):
         item = {
             "search_path": r[col_srch].strip(),
             "ref_path": r[col_ref].strip(),
+            "pair_id": r[col_pid].strip() if col_pid and r.get(col_pid) else None,
+            "gt_present": int(float(r[col_pres].strip())) if col_pres and r.get(col_pres) else 1,
         }
         if col_gtx and col_gty and r.get(col_gtx) and r.get(col_gty):
             try:
@@ -228,6 +235,7 @@ async def analyze_csv(file: UploadFile = File(...)):
     for i, item in enumerate(rows):
         srch_path = item["search_path"]
         ref_path = item["ref_path"]
+        pid = item["pair_id"] or f"pair_{i+1:03d}"
 
         resolved_srch = _resolve_image_path(srch_path)
         resolved_ref = _resolve_image_path(ref_path)
@@ -248,34 +256,49 @@ async def analyze_csv(file: UploadFile = File(...)):
         t_elapsed = time.perf_counter() - t0
         total_time += t_elapsed
 
-        pred_x = pred["predicted_x"]
-        pred_y = pred["predicted_y"]
+        pred_found = int(pred.get("found", 1))
+        pred_x = pred["predicted_x"] if pred_found else 0.0
+        pred_y = pred["predicted_y"] if pred_found else 0.0
+
+        loc_err = None
+        if "gt_x" in item and "gt_y" in item and item.get("gt_present", 1) == 1:
+            gt_x = item["gt_x"]
+            gt_y = item["gt_y"]
+            if pred_found and pred_x is not None and pred_y is not None:
+                loc_err = round(math.sqrt((pred_x - gt_x) ** 2 + (pred_y - gt_y) ** 2), 4)
+            else:
+                loc_err = 999.0
+            errors.append(loc_err)
+
+        if pred_found == 0:
+            status_desc = "REJECTED (Absent / Off-Field)"
+        elif loc_err is not None:
+            if loc_err <= 1.0:
+                status_desc = "ALIGNED (≤1.0 px)"
+            elif loc_err <= 5.0:
+                status_desc = "MINOR DRIFT (≤5.0 px)"
+            else:
+                status_desc = "SIGNIFICANT DRIFT (>5.0 px)"
+        else:
+            status_desc = "DETECTED"
 
         res_item = PairEvaluationResult(
             index=i + 1,
+            pair_id=pid,
             search_image_path=srch_path,
             reference_image_path=ref_path,
-            detected_x=round(pred_x, 4) if pred_x is not None else None,
-            detected_y=round(pred_y, 4) if pred_y is not None else None,
+            detected_x=round(pred_x, 4) if pred_found else None,
+            detected_y=round(pred_y, 4) if pred_found else None,
             gt_x=item.get("gt_x"),
             gt_y=item.get("gt_y"),
-            loc_error=None,
-            rotation=round(pred["predicted_rotation"], 4) if pred["predicted_rotation"] is not None else None,
-            scale=round(pred["predicted_scale"], 4) if pred["predicted_scale"] is not None else None,
+            loc_error=loc_err,
+            rotation=round(pred["predicted_rotation"], 4) if (pred_found and pred["predicted_rotation"] is not None) else None,
+            scale=round(pred["predicted_scale"], 4) if (pred_found and pred["predicted_scale"] is not None) else None,
             confidence=round(pred["confidence_score"], 4),
+            found=pred_found,
+            status=status_desc,
             elapsed_s=round(t_elapsed, 4),
         )
-
-        if "gt_x" in item and "gt_y" in item:
-            gt_x = item["gt_x"]
-            gt_y = item["gt_y"]
-            if pred_x is not None and pred_y is not None:
-                loc_err = math.sqrt((pred_x - gt_x) ** 2 + (pred_y - gt_y) ** 2)
-            else:
-                loc_err = 999.0
-            res_item.loc_error = round(loc_err, 4)
-            errors.append(loc_err)
-
         results.append(res_item)
 
     N = len(results)
