@@ -1,28 +1,54 @@
 """
 DriftSense service layer.
-Wraps the frozen FinalSystemMatcher and DriftRecoveryModule into a single
-analysis call that the API endpoints consume.
+Wraps the FinalSystemMatcher (Phase 1) and NaiveBaselineMatcher (Phase 2)
+plus DriftRecoveryModule into a unified analysis service for the API and frontend.
 """
+import time
 import numpy as np
 import cv2
 from typing import Dict, Any
 
 from src.final_system import FinalSystemMatcher, load_final_config
 from src.drift_recovery import DriftRecoveryModule
+from baseline import NaiveBaselineMatcher
 
 
 class DriftSenseService:
-    """Singleton-style service that holds a warm matcher instance."""
+    """Singleton service that supports both Phase 1 and Phase 2 inputs."""
 
     def __init__(self, config_path: str = "configs/final_system_config.json") -> None:
         self.config = load_final_config(config_path)
         self.matcher = FinalSystemMatcher(config_path)
+        self.phase2_matcher = NaiveBaselineMatcher()
 
         thresholds = self.config.get("drift_thresholds", {})
         self.recovery = DriftRecoveryModule(
             aligned_max_px=thresholds.get("aligned_max_px", 1.0),
             minor_drift_max_px=thresholds.get("minor_drift_max_px", 5.0),
         )
+
+    def match(self, reference: np.ndarray, search: np.ndarray) -> Dict[str, Any]:
+        """
+        Intelligently routes matching based on reference dimensions:
+        - Reference > 500px: Phase 2 unscaled fine-resolution reference (z in [8, 12])
+        - Reference <= 500px: Phase 1 pre-scaled 256x256 crop
+        """
+        ref_h, ref_w = reference.shape[:2]
+        if ref_h > 500 or ref_w > 500:
+            t0 = time.perf_counter()
+            p2_res = self.phase2_matcher.match(reference, search)
+            elapsed = time.perf_counter() - t0
+            return {
+                "predicted_x": p2_res["predicted_x"] if p2_res["predicted_present"] else 0.0,
+                "predicted_y": p2_res["predicted_y"] if p2_res["predicted_present"] else 0.0,
+                "predicted_rotation": p2_res["predicted_theta"],
+                "predicted_scale": p2_res["predicted_scale"],
+                "confidence_score": p2_res["confidence_score"],
+                "found": p2_res["predicted_present"],
+                "elapsed_s": elapsed,
+            }
+        else:
+            return self.matcher.match(reference, search)
 
     def run_analysis(
         self,
@@ -35,8 +61,8 @@ class DriftSenseService:
         End-to-end: match → drift → correction.
         Returns a flat dict ready for AnalysisResponse construction.
         """
-        # 1. Run frozen matcher
-        match_result = self.matcher.match(reference, search)
+        # 1. Run adaptive matcher
+        match_result = self.match(reference, search)
 
         pred_x = match_result["predicted_x"]
         pred_y = match_result["predicted_y"]
@@ -55,8 +81,6 @@ class DriftSenseService:
                 "search_width": float(sw),
                 "search_height": float(sh),
             }
-
-
 
         # 2. Run drift recovery
         drift_result = self.recovery.calculate_drift(
@@ -90,4 +114,3 @@ class DriftSenseService:
             "search_width": float(sw),
             "search_height": float(sh),
         }
-

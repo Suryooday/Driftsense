@@ -92,6 +92,10 @@ def _resolve_image_path(p_str: str) -> str:
         Path(p_clean),
         PROJECT_ROOT / p_clean,
         PROJECT_ROOT / p_clean.lstrip("/"),
+        PROJECT_ROOT / "output" / p_clean,
+        PROJECT_ROOT / "output" / p_clean.lstrip("/"),
+        PROJECT_ROOT / "output_200" / p_clean,
+        PROJECT_ROOT / "output_200" / p_clean.lstrip("/"),
         PROJECT_ROOT / "data" / p_clean,
         PROJECT_ROOT / "data" / p_clean.lstrip("/"),
         PROJECT_ROOT / "data" / Path(p_clean).name,
@@ -181,7 +185,7 @@ async def analyze_csv(file: UploadFile = File(...)):
         "search_image_file", "search_filename", "search_name"
     ]
     ref_synonyms = [
-        "reference image path", "reference_image_path", "ref_path", "reference", "ref_image",
+        "reference_path", "reference path", "reference image path", "reference_image_path", "ref_path", "reference", "ref_image",
         "ref_img", "ref_file", "referenceimage", "referencepath", "ref", "template_image",
         "template_path", "template", "ref_image_file", "reference_filename", "ref_name"
     ]
@@ -240,7 +244,7 @@ async def analyze_csv(file: UploadFile = File(...)):
             continue
 
         t0 = time.perf_counter()
-        pred = service.matcher.match(ref_img, srch_img)
+        pred = service.match(ref_img, srch_img)
         t_elapsed = time.perf_counter() - t0
         total_time += t_elapsed
 
