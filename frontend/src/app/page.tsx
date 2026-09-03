@@ -151,7 +151,7 @@ export default function Home() {
               }`}
             >
               <FileSpreadsheet className="h-4 w-4" />
-              Batch CSV Evaluation
+              Batch Registration (pairs.csv → predictions.csv)
             </button>
           </div>
         </div>
